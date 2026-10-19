@@ -1,0 +1,12 @@
+name: slice
+recipe: lamp
+config:
+  xdebug: 'develop,debug'
+  webroot: moodle
+  config:
+    php: .config/php.ini
+keys:
+  - id_rsa
+services:
+  appserver:
+    type: php:8.4
