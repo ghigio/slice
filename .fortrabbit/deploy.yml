@@ -1,0 +1,15 @@
+apiVersion: 1.0
+build:
+  buildCommands:
+    - composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+    - php bin/console importmap:install
+    - php bin/console asset-map:compile
+  postDeployCommands:
+    - mkdir -p var/data var/backups
+    - php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+    - php bin/console cache:clear
+distribution:
+  strategy: replace
+  excludePatterns:
+    - /var/data
+    - /var/backups

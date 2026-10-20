@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+        <title>{% block title %}Slice{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221em%22 font-size=%22110%22>🍕</text></svg>">
+        <script>
+            {# Tema chiaro/scuro secondo il dispositivo (color modes di Bootstrap) #}
+            (() => {
+                const media = window.matchMedia('(prefers-color-scheme: dark)');
+                const apply = () => document.documentElement.setAttribute('data-bs-theme', media.matches ? 'dark' : 'light');
+                apply();
+                media.addEventListener('change', apply);
+            })();
+        </script>
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        <nav class="navbar bg-body-tertiary border-bottom">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" href="{{ path('home') }}">Slice</a>
+            </div>
+        </nav>
+        <main class="container py-4">
+            {% block body %}{% endblock %}
+        </main>
+    </body>
+</html>

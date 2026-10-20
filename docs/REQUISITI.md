@@ -20,12 +20,12 @@ Non ci sono account utente: l'accesso avviene solo tramite link segreti. Il nome
 
 Scelta: Symfony su fortrabbit, con database SQLite salvato in un file sullo storage persistente, pubblicato su un sottodominio del dominio personale (es. `pizza.miodominio.it`) con HTTPS. Alternativa: MySQL gestito da fortrabbit, se una delle verifiche qui sotto fallisce.
 
-Perché: fortrabbit offre PHP con storage persistente e deploy via `git push`, in linea con le competenze PHP dello sviluppatore. Con al massimo 300 pizze per serata e poche decine di utenti contemporanei SQLite basta e non richiede un servizio database separato. Doctrine astrae il database, quindi il passaggio a MySQL richiede solo di cambiare `DATABASE_URL` e rigenerare le migrazioni.
+Perché: fortrabbit offre PHP con storage persistente e deploy automatico al push sul repository GitHub collegato, in linea con le competenze PHP dello sviluppatore. Con al massimo 300 pizze per serata e poche decine di utenti contemporanei SQLite basta e non richiede un servizio database separato. Doctrine astrae il database, quindi il passaggio a MySQL richiede solo di cambiare `DATABASE_URL` e rigenerare le migrazioni.
 
 Verifiche da fare su fortrabbit prima di adottare SQLite (se una fallisce si usa MySQL):
 
-- [ ] L'estensione `pdo_sqlite` risulta attiva in `phpinfo()` (pagina temporanea, da cancellare subito dopo).
-- [ ] Il file del database sopravvive a un nuovo deploy: creare un record, rifare il deploy, verificare che il record ci sia ancora.
+- [ ] PHP 8.4 è selezionabile e l'estensione `pdo_sqlite` risulta attiva (pagina di prova temporanea, da cancellare subito dopo).
+- [ ] Il file del database sopravvive a un nuovo deploy: con `/var/data` escluso nel deploy file, creare un record, rifare il deploy, verificare che il record ci sia ancora. La strategia di deploy predefinita di fortrabbit (`replace`) cancella i file non presenti nel pacchetto di deploy, quindi l'esclusione è indispensabile.
 - [ ] È chiaro se il piano include backup dello storage; in caso contrario si usa il comando di backup descritto sotto.
 
 | Componente | Scelta |
@@ -33,16 +33,17 @@ Verifiche da fare su fortrabbit prima di adottare SQLite (se una fallisce si usa
 | Linguaggio | PHP 8.4 o superiore (richiesto da Symfony 8) |
 | Framework | Symfony, ultima versione stabile (8.x) |
 | Persistenza | Doctrine ORM e Doctrine Migrations |
-| Interfaccia | Twig + Symfony UX Live Components e Turbo; Tailwind CSS con AssetMapper e `symfonycasts/tailwind-bundle`, senza Node in produzione |
+| Interfaccia | Twig + Symfony UX Live Components e Turbo; Bootstrap 5.3 tramite AssetMapper (importmap), senza Node né build frontend |
 | Aggiornamento dati | Polling dei Live Components ogni 5 secondi, niente websocket |
 | Database | SQLite in `var/data/app.db`, fuori dalla cartella pubblica e non versionato, con `journal_mode=WAL` e `foreign_keys=ON`; alternativa MySQL di fortrabbit |
 | Altri componenti | Validator, protezione CSRF, RateLimiter, Scheduler (o comando console lanciato dal cron di fortrabbit) |
 | Test | PHPUnit, con test unitari sull'algoritmo di sconto e test funzionali sui flussi |
-| Deploy | `git push` verso fortrabbit, con migrazioni Doctrine eseguite al deploy |
+| Ambiente locale | Lando, servizio unico PHP 8.4 + Apache, nessun database server |
+| Deploy | Push sul repository GitHub `slice`, collegato a fortrabbit tramite GitHub App; impostazioni versionate in `.fortrabbit/deploy.yml` (comandi di build, migrazioni Doctrine dopo il deploy, esclusione di `/var/data` e `/var/backups`) |
 
 Con SQLite serve un comando `app:db:backup` schedulato una volta al giorno: crea una copia coerente del database con `VACUUM INTO` in `var/backups/` e conserva le ultime 7 copie. Con MySQL il comando non serve.
 
-Claude Code deve includere un file `README.md` con le istruzioni di installazione locale, la configurazione delle variabili d'ambiente (incluse le due varianti di `DATABASE_URL`), i passi di deploy su fortrabbit, il collegamento del dominio personalizzato e come scaricare i backup. Prima di scrivere le istruzioni di deploy deve verificare la documentazione aggiornata di fortrabbit e quella di Symfony.
+Claude Code deve includere un file `README.md` con le istruzioni di installazione locale, la configurazione delle variabili d'ambiente (incluse le due varianti di `DATABASE_URL`), i passi di deploy su fortrabbit (GitHub App e deploy file), il collegamento del dominio personalizzato e come scaricare i backup. Prima di scrivere le istruzioni di deploy deve verificare la documentazione aggiornata di fortrabbit e quella di Symfony.
 
 ## Ruoli, link e ciclo di vita
 
@@ -207,7 +208,7 @@ Regole di implementazione:
 - Mobile-first, utilizzabile con una mano su schermi da 360 px; pulsanti di almeno 44 px.
 - Tutti i testi in italiano; importi nel formato `12,50 €`; date nel formato `19/10/2026`.
 - Il campo prezzo accetta sia la virgola sia il punto come separatore decimale.
-- Tema chiaro e scuro secondo le impostazioni del dispositivo.
+- Tema chiaro e scuro secondo le impostazioni del dispositivo, con i color modes di Bootstrap.
 - Messaggi di conferma brevi dopo ogni azione e conferma esplicita prima di eliminazioni, chiusura ordini e rigenerazione dei link.
 - Accessibilità di base: etichette sui campi, contrasto sufficiente, navigazione da tastiera.
 
@@ -264,7 +265,7 @@ Criteri di accettazione:
 
 **Piano di lavoro per Claude Code**, da eseguire in ordine e con un commit per fase:
 
-1. Verifiche SQLite su fortrabbit (sezione Stack), poi setup del progetto Symfony con Doctrine, Symfony UX, Tailwind, PHPUnit e SQLite; `README.md` iniziale.
+1. Verifiche SQLite su fortrabbit (sezione Stack), poi setup del progetto Symfony con Doctrine, Symfony UX, Bootstrap, PHPUnit e SQLite; `README.md` iniziale.
 2. Entità Doctrine, relazioni e migrazioni secondo il modello dati.
 3. `DiscountCalculator` con tutti i test della tabella dei casi; non proseguire finché non passano.
 4. Home e creazione serata.
