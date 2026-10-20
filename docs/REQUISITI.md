@@ -122,45 +122,47 @@ Tutti gli importi sono salvati come interi in centesimi di euro; non si usano ma
 
 Le colonne di tipo enum sono stringhe mappate su enum PHP (`enumType` di Doctrine), così lo schema funziona sia su SQLite sia su MySQL. Le chiavi esterne con cancellazione a cascata richiedono `foreign_keys=ON` su SQLite.
 
-**serate** (`evenings`)
+Nel codice e nello schema i nomi sono in inglese; i testi dell'interfaccia restano in italiano. Il gruppo (famiglia) è l'entità `Eater`, tabella `eaters`: il nome `groups` è evitato perché è una parola riservata in MySQL 8. Le colonne `created_at` e `updated_at` (timestamp) sono presenti in tutte le tabelle.
+
+**Serate** (`evenings`, entità `Evening`)
 
 | Campo | Tipo | Note |
 | --- | --- | --- |
 | id | bigint | Chiave primaria |
 | admin\_token | string(64), unico | Generato in modo casuale e sicuro |
-| nome | string | Obbligatorio |
-| data | date | Obbligatoria |
+| name | string | Obbligatorio |
+| date | date | Obbligatoria |
 | pizzeria | string, nullable |  |
-| nome\_organizzatore | string | Obbligatorio |
-| note\_rimborso | text, nullable | Mostrate ai gruppi |
-| stato | enum | `ordini_aperti`, `ordini_chiusi`, `conto_inserito`, `archiviata` |
-| totale\_pagato\_cent | int, nullable | Valorizzato con il conto |
-| modalita\_sconto | enum | `proporzionale` (predefinita), `uguale` |
-| gruppo\_organizzatore\_id | FK nullable | Gruppo dell'organizzatore |
-| timestamps |  |  |
+| organizer\_name | string | Obbligatorio |
+| refund\_notes | text, nullable | Note per il rimborso, mostrate ai gruppi |
+| status | enum | `orders_open` (ordini aperti), `orders_closed` (ordini chiusi), `bill_entered` (conto inserito), `archived` (archiviata) |
+| paid\_total\_cents | int, nullable | Totale pagato, valorizzato con il conto |
+| discount\_mode | enum | `proportional` (predefinita), `equal` (uguale per ogni pizza) |
+| organizer\_eater\_id | FK nullable | Gruppo dell'organizzatore; impostata a NULL se il gruppo viene eliminato |
+| created\_at, updated\_at | datetime |  |
 
-**gruppi** (`groups`)
+**Gruppi** (`eaters`, entità `Eater`)
 
 | Campo | Tipo | Note |
 | --- | --- | --- |
 | id | bigint |  |
 | evening\_id | FK | Cancellazione a cascata |
 | token | string(64), unico | Rigenerabile |
-| nome | string | Unico all'interno della serata |
-| rimborsato\_il | datetime, nullable | Null = da rimborsare |
-| timestamps |  |  |
+| name | string | Unico all'interno della serata, senza distinzione di maiuscole e spazi (vincolo DB sul nome ripulito, controllo case-insensitive in validazione) |
+| reimbursed\_at | datetime, nullable | Data del rimborso; null = da rimborsare |
+| created\_at, updated\_at | datetime |  |
 
-**pizze** (`pizzas`)
+**Pizze** (`pizzas`, entità `Pizza`)
 
 | Campo | Tipo | Note |
 | --- | --- | --- |
 | id | bigint |  |
-| group\_id | FK | Cancellazione a cascata |
-| persona | string(60) | Obbligatoria |
-| nome\_pizza | string(80) | Obbligatorio, salvato come digitato ma senza spazi iniziali/finali e spazi multipli |
-| nome\_normalizzato | string(80) | Minuscolo, senza accenti, spazi compattati; usato per aggregare |
-| prezzo\_cent | int | Tra 1 e 10.000 (0,01 € – 100 €) |
-| timestamps |  |  |
+| eater\_id | FK | Cancellazione a cascata |
+| person | string(60) | Obbligatoria |
+| pizza\_name | string(80) | Obbligatorio, salvato come digitato ma senza spazi iniziali/finali e spazi multipli |
+| normalized\_name | string(80) | Minuscolo, senza accenti, spazi compattati; usato per aggregare |
+| price\_cents | int | Tra 1 e 10.000 (0,01 € – 100 €) |
+| created\_at, updated\_at | datetime |  |
 
 Nella lista per il pizzaiolo il nome mostrato per ogni gruppo di pizze uguali è la forma digitata più frequente.
 

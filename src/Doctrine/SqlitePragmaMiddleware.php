@@ -11,7 +11,8 @@ use Doctrine\DBAL\Driver\Middleware\AbstractDriverMiddleware;
 /**
  * Su SQLite attiva WAL e chiavi esterne a ogni nuova connessione; con altri driver non fa nulla.
  */
-#[AsMiddleware]
+// Priorità alta = middleware più interno: i PRAGMA vanno eseguiti prima di qualsiasi transazione (foreign_keys è ignorato dentro una transazione).
+#[AsMiddleware(priority: 200)]
 final class SqlitePragmaMiddleware implements Middleware
 {
     public function wrap(Driver $driver): Driver
