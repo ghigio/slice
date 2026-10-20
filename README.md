@@ -69,6 +69,8 @@ Istruzioni dettagliate, dominio personalizzato e download dei backup: da complet
 
 | Verifica | Esito |
 | --- | --- |
-| PHP 8.4 selezionabile e `pdo_sqlite` attiva | Da verificare |
-| Il file del database sopravvive a un nuovo deploy | Da verificare |
-| Backup dello storage inclusi nel piano | Da verificare |
+| PHP 8.4 selezionabile e `pdo_sqlite` attiva | Superata (20/10/2026) |
+| Il file del database sopravvive a un nuovo deploy | Superata (20/10/2026), con `/var/data` escluso in `.fortrabbit/deploy.yml` |
+| Backup dello storage inclusi nel piano | Giornalieri, ma viene conservata una sola copia |
+
+Esito: si adotta SQLite. Poiché fortrabbit conserva un solo backup, resta necessario il comando `app:db:backup` (fase 9), che mantiene le ultime 7 copie in `var/backups/`.

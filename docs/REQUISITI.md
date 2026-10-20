@@ -24,9 +24,9 @@ Perché: fortrabbit offre PHP con storage persistente e deploy automatico al pus
 
 Verifiche da fare su fortrabbit prima di adottare SQLite (se una fallisce si usa MySQL):
 
-- [ ] PHP 8.4 è selezionabile e l'estensione `pdo_sqlite` risulta attiva (pagina di prova temporanea, da cancellare subito dopo).
-- [ ] Il file del database sopravvive a un nuovo deploy: con `/var/data` escluso nel deploy file, creare un record, rifare il deploy, verificare che il record ci sia ancora. La strategia di deploy predefinita di fortrabbit (`replace`) cancella i file non presenti nel pacchetto di deploy, quindi l'esclusione è indispensabile.
-- [ ] È chiaro se il piano include backup dello storage; in caso contrario si usa il comando di backup descritto sotto.
+- [x] PHP 8.4 è selezionabile e l'estensione `pdo_sqlite` risulta attiva (pagina di prova temporanea, da cancellare subito dopo).
+- [x] Il file del database sopravvive a un nuovo deploy: con `/var/data` escluso nel deploy file, creare un record, rifare il deploy, verificare che il record ci sia ancora. La strategia di deploy predefinita di fortrabbit (`replace`) cancella i file non presenti nel pacchetto di deploy, quindi l'esclusione è indispensabile.
+- [x] È chiaro se il piano include backup dello storage; in caso contrario si usa il comando di backup descritto sotto. Esito: backup giornalieri con una sola copia conservata, quindi il comando `app:db:backup` è necessario.
 
 | Componente | Scelta |
 | --- | --- |

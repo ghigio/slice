@@ -22,3 +22,7 @@
 ###> lando ###
 /.lando.yml
 ###< lando ###
+
+###> editor ###
+/.vscode/
+###< editor ###
