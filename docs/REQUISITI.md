@@ -186,7 +186,7 @@ p'_i = \operatorname{round}\left( p_i \cdot \frac{T}{S} \right)
 p'_i = \operatorname{round}\left( p_i - \frac{D}{n} \right)
 ```
 
-Se in modalità uguale anche una sola pizza risulterebbe con prezzo negativo, il sistema non applica il calcolo e mostra all'organizzatore un errore che indica la pizza coinvolta e suggerisce la modalità proporzionale.
+Se in modalità uguale anche una sola pizza risulterebbe con prezzo negativo dopo l'arrotondamento al centesimo, il sistema non applica il calcolo e mostra all'organizzatore un errore che indica la pizza coinvolta e suggerisce la modalità proporzionale.
 
 **Differenza da arrotondamento**: Δ = somma dei p'\_i − T. Va mostrata nel riepilogo dell'organizzatore così:
 
@@ -196,8 +196,8 @@ Se in modalità uguale anche una sola pizza risulterebbe con prezzo negativo, il
 
 Regole di implementazione:
 
-- Calcolo solo con interi: la proporzionale si calcola come `intdiv(2 * p_i * T + S, 2 * S)`, la uguale come arrotondamento di `(n * p_i - D) / n` con la stessa tecnica. Arrotondamento «half up» (0,5 centesimi va verso l'alto) per valori positivi.
-- La logica sta in una classe di servizio pura (es. `App\Service\DiscountCalculator`) che riceve l'elenco dei prezzi, T e la modalità e restituisce i prezzi scontati e Δ, senza dipendere dal database: è la parte più importante da coprire con test.
+- Calcolo solo con interi: la proporzionale si calcola come `intdiv(2 * p_i * T + S, 2 * S)`, la uguale come arrotondamento di `(n * p_i - D) / n` con la stessa tecnica. Arrotondamento «half up» (0,5 centesimi va verso l'alto, cioè verso +∞, anche per valori negativi): in modalità uguale un prezzo esatto di −0,33 o −0,5 centesimi diventa 0 ed è ammesso, −1,5 diventa −1 ed è un errore.
+- La logica sta in una classe di servizio pura (`App\Discount\DiscountCalculator`) che riceve l'elenco dei prezzi, T e la modalità e restituisce i prezzi scontati e Δ, senza dipendere dal database: è la parte più importante da coprire con test.
 - Totale per persona e totale per gruppo sono somme dei p'\_i, mai ricalcolati proporzionalmente sui totali.
 - Se S = 0 (nessuna pizza) il conto non si può inserire.
 - Se T > S («maggiorazione», confermata dall'organizzatore) le stesse formule valgono con D negativo.
