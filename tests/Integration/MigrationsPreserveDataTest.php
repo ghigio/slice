@@ -41,6 +41,7 @@ final class MigrationsPreserveDataTest extends TestCase
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $this->database]);
         self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM eaters'));
         self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM pizzas'));
+        self::assertSame(700, (int) $connection->fetchOne('SELECT price_cents FROM pizzas'));
         self::assertSame(64, \strlen((string) $connection->fetchOne('SELECT invite_token FROM evenings')));
         $connection->close();
     }

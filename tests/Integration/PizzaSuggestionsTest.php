@@ -79,4 +79,33 @@ final class PizzaSuggestionsTest extends KernelTestCase
 
         self::assertSame(['Anna', 'Luca'], self::getContainer()->get(PizzaRepository::class)->personsForEater($rossi));
     }
+
+    public function testPizzeSenzaPrezzoNeiSuggerimentiENelRiepilogo(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $evening = new Evening('Serata', new \DateTimeImmutable('2026-10-19'), 'Org');
+        $rossi = new Eater($evening, 'Famiglia Rossi');
+        $em->persist($evening);
+        new Pizza($rossi, 'Anna', 'Margherita', 700);
+        $em->flush();
+        new Pizza($rossi, 'Luca', 'margherita', null);
+        new Pizza($rossi, 'Luca', 'Margherita', null);
+        new Pizza($rossi, 'Sara', 'Diavola', null);
+        $em->flush();
+
+        $repository = self::getContainer()->get(PizzaRepository::class);
+
+        // Il suggerimento propone l'ultimo prezzo noto; una pizza mai prezzata compare senza prezzo.
+        self::assertSame([
+            ['name' => 'Diavola', 'priceCents' => null],
+            ['name' => 'Margherita', 'priceCents' => 700],
+        ], $repository->suggestionsForEvening($evening));
+
+        self::assertSame([
+            ['name' => 'Diavola', 'normalizedName' => 'diavola', 'quantity' => 1],
+            ['name' => 'Margherita', 'normalizedName' => 'margherita', 'quantity' => 2],
+        ], $repository->missingPricesForEvening($evening));
+    }
 }

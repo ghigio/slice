@@ -67,7 +67,7 @@ final class PizzaList
     }
 
     /**
-     * Pizze con lo stesso nome ma prezzi diversi in gruppi diversi (probabile errore di inserimento).
+     * Pizze con lo stesso nome ma prezzi diversi in gruppi diversi (probabile errore di inserimento); le pizze senza prezzo non contano.
      *
      * @return list<array{name: string, rows: list<array{eater: string, person: string, pizzaName: string, priceCents: int}>}>
      */
@@ -124,7 +124,7 @@ final class PizzaList
     {
         foreach ($pizzas as $a) {
             foreach ($pizzas as $b) {
-                if ($a->getEater() !== $b->getEater() && $a->getPriceCents() !== $b->getPriceCents()) {
+                if ($a->getEater() !== $b->getEater() && $a->hasPrice() && $b->hasPrice() && $a->getPriceCents() !== $b->getPriceCents()) {
                     return true;
                 }
             }

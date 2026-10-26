@@ -82,7 +82,7 @@ final class PizzaOrder
                 $this->editingId = $pizzaId;
                 $this->editPerson = $pizza->getPerson();
                 $this->editPizzaName = $pizza->getPizzaName();
-                $this->editPrice = MoneyFormatter::formatInput($pizza->getPriceCents());
+                $this->editPrice = $pizza->hasPrice() ? MoneyFormatter::formatInput($pizza->getPriceCents()) : '';
             }
         }
     }
@@ -129,25 +129,38 @@ final class PizzaOrder
         return PizzaOrdering::canEdit($this->eater->getEvening(), $this->asOrganizer);
     }
 
-    /** @return array<string, array{pizzas: list<Pizza>, totalCents: int}> persona => pizze e totale, in ordine alfabetico */
+    /**
+     * Persona => pizze, totale dei prezzi noti e numero di pizze senza prezzo, in ordine alfabetico.
+     *
+     * @return array<string, array{pizzas: list<Pizza>, totalCents: int, missing: int}>
+     */
     public function byPerson(): array
     {
         $groups = [];
         foreach ($this->eater->getPizzas() as $pizza) {
-            $groups[$pizza->getPerson()]['pizzas'][] = $pizza;
-            $groups[$pizza->getPerson()]['totalCents'] = ($groups[$pizza->getPerson()]['totalCents'] ?? 0) + $pizza->getPriceCents();
+            $group = &$groups[$pizza->getPerson()];
+            $group['pizzas'][] = $pizza;
+            $group['totalCents'] = ($group['totalCents'] ?? 0) + ($pizza->getPriceCents() ?? 0);
+            $group['missing'] = ($group['missing'] ?? 0) + ($pizza->hasPrice() ? 0 : 1);
+            unset($group);
         }
         uksort($groups, 'strcasecmp');
 
         return $groups;
     }
 
+    /** Totale dei prezzi noti. */
     public function totalCents(): int
     {
-        return array_sum(array_map(fn (Pizza $p) => $p->getPriceCents(), $this->eater->getPizzas()->toArray()));
+        return array_sum(array_map(fn (Pizza $p) => $p->getPriceCents() ?? 0, $this->eater->getPizzas()->toArray()));
     }
 
-    /** @return list<array{name: string, priceCents: int}> */
+    public function missingPrices(): int
+    {
+        return \count(array_filter($this->eater->getPizzas()->toArray(), fn (Pizza $p) => !$p->hasPrice()));
+    }
+
+    /** @return list<array{name: string, priceCents: ?int}> */
     public function pizzaSuggestions(): array
     {
         return $this->pizzas->suggestionsForEvening($this->eater->getEvening());
@@ -164,7 +177,9 @@ final class PizzaOrder
     {
         $prices = [];
         foreach ($this->pizzaSuggestions() as $suggestion) {
-            $prices[NameNormalizer::normalize($suggestion['name'])] = MoneyFormatter::formatInput($suggestion['priceCents']);
+            if (null !== $suggestion['priceCents']) {
+                $prices[NameNormalizer::normalize($suggestion['name'])] = MoneyFormatter::formatInput($suggestion['priceCents']);
+            }
         }
 
         return $prices;

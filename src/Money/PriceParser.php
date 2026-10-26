@@ -22,6 +22,12 @@ final class PriceParser
         return $cents;
     }
 
+    /** Prezzo facoltativo: campo vuoto → null. */
+    public static function parseOptionalCents(string $input): ?int
+    {
+        return '' === trim($input) ? null : self::parseCents($input);
+    }
+
     /** Totale pagato dello scontrino: da 0,01 € a 50.000,00 €. */
     public static function parseTotalCents(string $input): int
     {

@@ -76,4 +76,17 @@ final class PriceParserTest extends TestCase
         yield 'zero' => ['0', 'Il totale pagato deve essere tra 0,01 € e 50.000,00 €.'];
         yield 'oltre il massimo' => ['50000,01', 'Il totale pagato deve essere tra 0,01 € e 50.000,00 €.'];
     }
+
+    public function testPrezzoFacoltativo(): void
+    {
+        self::assertNull(PriceParser::parseOptionalCents(''));
+        self::assertNull(PriceParser::parseOptionalCents('   '));
+        self::assertSame(750, PriceParser::parseOptionalCents('7,50'));
+    }
+
+    public function testPrezzoFacoltativoNonValido(): void
+    {
+        $this->expectExceptionObject(new InvalidPriceException('Inserisci un prezzo valido, per esempio 7,50.'));
+        PriceParser::parseOptionalCents('sette');
+    }
 }

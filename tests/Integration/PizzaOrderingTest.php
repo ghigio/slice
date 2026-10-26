@@ -151,4 +151,78 @@ final class PizzaOrderingTest extends KernelTestCase
         $this->expectExceptionObject(new EveningRuleException('La serata ha raggiunto il limite di 300 pizze.'));
         $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', false);
     }
+
+    public function testPrezzoFacoltativoConOrdiniAperti(): void
+    {
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '  ', false);
+        self::assertNull($pizza->getPriceCents());
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '7', false);
+        self::assertSame(700, $pizza->getPriceCents());
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '', false);
+        self::assertNull($pizza->getPriceCents());
+    }
+
+    public function testConIlContoInseritoIlPrezzoEObbligatorio(): void
+    {
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', false);
+        $this->evening->setStatus(EveningStatus::OrdersClosed);
+        $this->evening->enterBill(700, \App\Enum\DiscountMode::Proportional);
+        $this->em->flush();
+
+        foreach ([
+            fn () => $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', '', true),
+            fn () => $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '', true),
+        ] as $operation) {
+            try {
+                $operation();
+                self::fail('Attesa EveningRuleException');
+            } catch (EveningRuleException $e) {
+                self::assertSame('Con il conto inserito ogni pizza deve avere un prezzo.', $e->getMessage());
+            }
+        }
+        self::assertSame(700, $pizza->getPriceCents());
+    }
+
+    public function testLOrganizzatoreCompletaIPrezziMancantiPerNome(): void
+    {
+        $bianchi = new Eater($this->evening, 'Famiglia Bianchi');
+        $this->em->flush();
+        $a = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', false);
+        $b = $this->ordering->addPizza($bianchi, 'Gino', ' margherita ', '', false);
+        $priced = $this->ordering->addPizza($bianchi, 'Marta', 'Margherita', '6,50', false);
+        $other = $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', '', false);
+
+        $updated = $this->ordering->setMissingPrices($this->evening, 'margherita', '7');
+
+        self::assertSame(2, $updated);
+        self::assertSame(700, $a->getPriceCents());
+        self::assertSame(700, $b->getPriceCents());
+        self::assertSame(650, $priced->getPriceCents());
+        self::assertNull($other->getPriceCents());
+    }
+
+    public function testPrezziMancantiConPrezzoNonValidoONonInserito(): void
+    {
+        $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', false);
+
+        foreach (['' => 'Inserisci il prezzo.', 'tanto' => 'Inserisci un prezzo valido, per esempio 7,50.'] as $input => $message) {
+            try {
+                $this->ordering->setMissingPrices($this->evening, 'margherita', $input);
+                self::fail('Attesa EveningRuleException');
+            } catch (EveningRuleException $e) {
+                self::assertSame($message, $e->getMessage());
+            }
+        }
+    }
+
+    public function testPrezziMancantiNonDaArchiviata(): void
+    {
+        $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', false);
+        $this->evening->setStatus(EveningStatus::Archived);
+
+        $this->expectExceptionObject(new EveningRuleException('La serata è archiviata: riaprila per modificarla.'));
+        $this->ordering->setMissingPrices($this->evening, 'margherita', '7');
+    }
 }

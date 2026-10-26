@@ -113,6 +113,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 **Conto e sconto**
 
 - Somma dei prezzi inseriti («totale da listino»).
+- Pizze senza prezzo: riquadro «Pizze senza prezzo» con una riga per nome di pizza (nome mostrato come nella lista per il pizzaiolo e numero di pizze); il prezzo inserito vale per tutte le pizze senza prezzo con quel nome. Finché ne resta anche una, il conto non si può inserire («Ci sono N pizze senza prezzo: completale prima di inserire il conto.»). Con il conto inserito ogni pizza deve avere un prezzo. Le pizze senza prezzo non generano avvisi di prezzi incoerenti; il suggerimento di prezzo usa l'ultimo prezzo noto.
 - Campo «Totale pagato» (importo dello scontrino arrotondato dal pizzaiolo). Se coincide con il totale da listino, lo sconto è zero.
 - Scelta della modalità: «Proporzionale al prezzo» (predefinita) o «Uguale per ogni pizza».
 - Anteprima prima di confermare: sconto totale in euro e in percentuale, quota di ogni gruppo.
@@ -137,7 +138,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 ### Gruppo (`/g/{token_gruppo}`)
 
 - Intestazione con nome della serata, pizzeria, data e nome del gruppo.
-- Con ordini aperti: aggiungere una pizza indicando nome della persona, nome della pizza e prezzo; modificare ed eliminare le righe del proprio gruppo.
+- Con ordini aperti: aggiungere una pizza indicando nome della persona, nome della pizza e prezzo (facoltativo: se non è noto si lascia vuoto e la pizza mostra «Prezzo da definire»; i totali sommano i prezzi noti e indicano quante pizze sono senza prezzo); modificare ed eliminare le righe del proprio gruppo.
 - Il campo pizza propone in autocompletamento i nomi già inseriti nella serata da qualsiasi gruppo, per evitare varianti come «margherita» e «Margherita »; selezionando un nome viene proposto l'ultimo prezzo usato per quella pizza.
 - Il campo persona propone i nomi già usati nel gruppo.
 - Elenco delle pizze del gruppo raggruppate per persona, con il totale.
@@ -194,7 +195,7 @@ Nel codice e nello schema i nomi sono in inglese; i testi dell'interfaccia resta
 | person | string(60) | Obbligatoria |
 | pizza\_name | string(80) | Obbligatorio, salvato come digitato ma senza spazi iniziali/finali e spazi multipli |
 | normalized\_name | string(80) | Minuscolo, senza accenti, spazi compattati; usato per aggregare |
-| price\_cents | int | Tra 1 e 10.000 (0,01 € – 100 €) |
+| price\_cents | int, nullable | Tra 1 e 10.000 (0,01 € – 100 €); null = prezzo da definire, obbligatorio prima del conto |
 | created\_at, updated\_at | datetime |  |
 
 Nella lista per il pizzaiolo il nome mostrato per ogni gruppo di pizze uguali è la forma digitata più frequente.

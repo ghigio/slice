@@ -17,6 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Inserimento, modifica ed eliminazione delle pizze di un gruppo, con le regole di stato verificate lato server.
+ * Il prezzo è facoltativo finché non si inserisce il conto; i prezzi mancanti li completa l'organizzatore.
  * Il gruppo può modificare solo con ordini aperti; l'organizzatore in ogni stato tranne «Archiviata».
  */
 final class PizzaOrdering
@@ -33,7 +34,7 @@ final class PizzaOrdering
     {
         $evening = $eater->getEvening();
         $this->assertCanEdit($evening, $asOrganizer);
-        [$person, $pizzaName, $priceCents] = $this->validate($person, $pizzaName, $price);
+        [$person, $pizzaName, $priceCents] = $this->validate($evening, $person, $pizzaName, $price);
         if ($this->countPizzas($evening) >= self::MAX_PIZZAS_PER_EVENING) {
             throw new EveningRuleException(sprintf('La serata ha raggiunto il limite di %d pizze.', self::MAX_PIZZAS_PER_EVENING));
         }
@@ -50,7 +51,7 @@ final class PizzaOrdering
     {
         $this->assertCanEdit($eater->getEvening(), $asOrganizer);
         $pizza = $this->pizza($eater, $pizzaId);
-        [$person, $pizzaName, $priceCents] = $this->validate($person, $pizzaName, $price);
+        [$person, $pizzaName, $priceCents] = $this->validate($eater->getEvening(), $person, $pizzaName, $price);
         $key = spl_object_id($pizza);
         $this->assertBillStillComputable($eater->getEvening(), fn (array $prices) => array_replace($prices, [$key => $priceCents]), [$key => [$pizzaName, $person, $eater->getName()]]);
 
@@ -70,6 +71,37 @@ final class PizzaOrdering
         $eater->removePizza($pizza);
         $this->em->remove($pizza);
         $this->em->flush();
+    }
+
+    /**
+     * L'organizzatore completa i prezzi mancanti: il prezzo vale per tutte le pizze senza prezzo con quel nome.
+     *
+     * @return int numero di pizze aggiornate
+     */
+    public function setMissingPrices(Evening $evening, string $normalizedName, string $price): int
+    {
+        $this->assertCanEdit($evening, true);
+        if ('' === trim($price)) {
+            throw new EveningRuleException('Inserisci il prezzo.');
+        }
+        try {
+            $priceCents = PriceParser::parseCents($price);
+        } catch (InvalidPriceException $e) {
+            throw new EveningRuleException($e->getMessage(), 0, $e);
+        }
+
+        $updated = 0;
+        foreach ($evening->getEaters() as $eater) {
+            foreach ($eater->getPizzas() as $pizza) {
+                if (!$pizza->hasPrice() && $pizza->getNormalizedName() === $normalizedName) {
+                    $pizza->setPriceCents($priceCents);
+                    ++$updated;
+                }
+            }
+        }
+        $this->em->flush();
+
+        return $updated;
     }
 
     public static function canEdit(Evening $evening, bool $asOrganizer): bool
@@ -136,8 +168,8 @@ final class PizzaOrdering
         throw new EveningRuleException('Pizza non trovata.');
     }
 
-    /** @return array{string, string, int} */
-    private function validate(string $person, string $pizzaName, string $price): array
+    /** @return array{string, string, ?int} prezzo facoltativo, obbligatorio con il conto inserito */
+    private function validate(Evening $evening, string $person, string $pizzaName, string $price): array
     {
         $person = NameNormalizer::clean($person);
         $pizzaName = NameNormalizer::clean($pizzaName);
@@ -156,9 +188,12 @@ final class PizzaOrdering
         }
 
         try {
-            $priceCents = PriceParser::parseCents($price);
+            $priceCents = PriceParser::parseOptionalCents($price);
         } catch (InvalidPriceException $e) {
             throw new EveningRuleException($e->getMessage(), 0, $e);
+        }
+        if (null === $priceCents && $evening->hasBill()) {
+            throw new EveningRuleException('Con il conto inserito ogni pizza deve avere un prezzo.');
         }
 
         return [$person, $pizzaName, $priceCents];

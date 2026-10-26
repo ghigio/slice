@@ -110,4 +110,16 @@ final class PizzaListTest extends TestCase
         self::assertSame('', $list->asText());
         self::assertSame([], $list->byEater());
     }
+
+    public function testPizzeSenzaPrezzoNellaListaMaNonNeiConflitti(): void
+    {
+        $list = PizzaList::fromPizzas([
+            new Pizza($this->rossi, 'Anna', 'Margherita', null),
+            new Pizza($this->bianchi, 'Gino', 'Margherita', 700),
+            new Pizza($this->bianchi, 'Marta', 'Margherita', null),
+        ]);
+
+        self::assertSame([['name' => 'Margherita', 'quantity' => 3]], $list->lines());
+        self::assertSame([], $list->priceConflicts());
+    }
 }

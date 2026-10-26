@@ -1,0 +1,27 @@
+<section {{ attributes }} data-poll="delay(15000)|$render">
+    {% set missing = this.missing %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+    {% if missing is not empty %}
+        <div class="card border-warning mb-4">
+            <div class="card-body">
+                <h2 class="h5">Pizze senza prezzo</h2>
+                <p class="small text-body-secondary">Inserisci il prezzo una volta per pizza: vale per tutte quelle ancora senza prezzo. Finché ne mancano, il conto non si può inserire.</p>
+                {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+                {% for row in missing %}
+                    {% set key = this.key(row.normalizedName) %}
+                    <form class="mb-2" data-missing-row data-action="live#action:prevent" data-live-action-param="apply" data-live-normalized-name-param="{{ row.normalizedName }}">
+                        <label for="missing-{{ key }}" class="form-label mb-1">
+                            <span data-missing-name>{{ row.name }}</span>
+                            <span class="text-body-secondary small">({{ row.quantity }} {{ row.quantity == 1 ? 'pizza' : 'pizze' }})</span>
+                        </label>
+                        <div class="input-group">
+                            <input id="missing-{{ key }}" type="text" inputmode="decimal" class="form-control" placeholder="7,50"
+                                   data-model="norender|prices.{{ key }}" value="{{ prices[key] ?? '' }}">
+                            <button type="submit" class="btn btn-primary">Applica</button>
+                        </div>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</section>

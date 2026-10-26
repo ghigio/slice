@@ -21,9 +21,9 @@ class PizzaRepository extends ServiceEntityRepository
 
     /**
      * Pizze già inserite nella serata da qualsiasi gruppo, una per nome normalizzato:
-     * forma digitata più frequente (a parità, la più recente) e ultimo prezzo usato. Ordinate per nome.
+     * forma digitata più frequente (a parità, la più recente) e ultimo prezzo noto (null se mai inserito). Ordinate per nome.
      *
-     * @return list<array{name: string, priceCents: int}>
+     * @return list<array{name: string, priceCents: ?int}>
      */
     public function suggestionsForEvening(Evening $evening): array
     {
@@ -39,7 +39,10 @@ class PizzaRepository extends ServiceEntityRepository
         $groups = [];
         foreach ($rows as $row) {
             $groups[$row['normalizedName']]['forms'][] = $row['pizzaName'];
-            $groups[$row['normalizedName']]['priceCents'] = $row['priceCents'];
+            $groups[$row['normalizedName']]['priceCents'] ??= null;
+            if (null !== $row['priceCents']) {
+                $groups[$row['normalizedName']]['priceCents'] = $row['priceCents'];
+            }
         }
 
         $suggestions = [];
@@ -49,6 +52,39 @@ class PizzaRepository extends ServiceEntityRepository
         usort($suggestions, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
 
         return $suggestions;
+    }
+
+    /**
+     * Pizze senza prezzo della serata, raggruppate per nome normalizzato (nome mostrato come nella lista per il pizzaiolo).
+     *
+     * @return list<array{name: string, normalizedName: string, quantity: int}>
+     */
+    public function missingPricesForEvening(Evening $evening): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('p.pizzaName, p.normalizedName, p.priceCents')
+            ->join('p.eater', 'e')
+            ->where('e.evening = :evening')
+            ->setParameter('evening', $evening)
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $groups = [];
+        foreach ($rows as $row) {
+            $groups[$row['normalizedName']]['forms'][] = $row['pizzaName'];
+            $groups[$row['normalizedName']]['missing'] = ($groups[$row['normalizedName']]['missing'] ?? 0) + (null === $row['priceCents'] ? 1 : 0);
+        }
+
+        $missing = [];
+        foreach ($groups as $normalizedName => $group) {
+            if ($group['missing'] > 0) {
+                $missing[] = ['name' => PreferredForm::pick($group['forms']), 'normalizedName' => (string) $normalizedName, 'quantity' => $group['missing']];
+            }
+        }
+        usort($missing, fn ($a, $b) => strcmp($a['normalizedName'], $b['normalizedName']));
+
+        return $missing;
     }
 
     /** @return list<string> persone già usate nel gruppo, in ordine alfabetico */

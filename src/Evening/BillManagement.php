@@ -32,6 +32,16 @@ final class BillManagement
             throw new EveningRuleException('Chiudi gli ordini prima di inserire il conto.');
         }
 
+        $missing = 0;
+        foreach ($evening->getEaters() as $eater) {
+            foreach ($eater->getPizzas() as $pizza) {
+                $missing += $pizza->hasPrice() ? 0 : 1;
+            }
+        }
+        if ($missing > 0) {
+            throw new EveningRuleException(sprintf('%s senza prezzo: completale prima di inserire il conto.', 1 === $missing ? "C'è 1 pizza" : "Ci sono $missing pizze"));
+        }
+
         try {
             $paidTotalCents = PriceParser::parseTotalCents($paidTotal);
         } catch (InvalidPriceException $e) {

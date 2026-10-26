@@ -237,4 +237,14 @@ final class BillManagementTest extends KernelTestCase
         $this->expectExceptionObject(new EveningRuleException('Con il conto inserito deve restare almeno una pizza.'));
         (new PizzaOrdering($this->em))->deletePizza($eater, $pizza->getId(), true);
     }
+
+    public function testContoBloccatoConPizzeSenzaPrezzo(): void
+    {
+        new Pizza($this->b, 'Gino', 'Diavola', null);
+        new Pizza($this->a, 'Sara', 'Marinara', null);
+        $this->em->flush();
+
+        $this->expectExceptionObject(new EveningRuleException('Ci sono 2 pizze senza prezzo: completale prima di inserire il conto.'));
+        $this->bills->preview($this->evening, '30', DiscountMode::Proportional);
+    }
 }

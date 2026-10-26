@@ -11,6 +11,7 @@ use App\Evening\Exception\EveningRuleException;
 use App\Money\MoneyFormatter;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentToolsTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
@@ -70,6 +71,13 @@ final class BillForm
         }
     }
 
+    /** Prezzi mancanti completati dall'organizzatore: l'anteprima va ricalcolata. */
+    #[LiveListener('pricesUpdated')]
+    public function refresh(): void
+    {
+        $this->previewComputed = false;
+    }
+
     public function canEnterBill(): bool
     {
         return \in_array($this->evening->getStatus(), [EveningStatus::OrdersClosed, EveningStatus::BillEntered], true);
@@ -85,7 +93,7 @@ final class BillForm
         $total = 0;
         foreach ($this->evening->getEaters() as $eater) {
             foreach ($eater->getPizzas() as $pizza) {
-                $total += $pizza->getPriceCents();
+                $total += $pizza->getPriceCents() ?? 0;
             }
         }
 

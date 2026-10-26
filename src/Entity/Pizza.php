@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Una pizza ordinata da una persona di un gruppo; prezzo di listino in centesimi.
+ * Una pizza ordinata da una persona di un gruppo; prezzo di listino in centesimi, facoltativo finché non si inserisce il conto.
  */
 #[ORM\Entity(repositoryClass: PizzaRepository::class)]
 #[ORM\Table(name: 'pizzas')]
@@ -41,11 +41,11 @@ class Pizza
     #[ORM\Column(length: 80)]
     private string $normalizedName;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     #[Assert\Range(min: 1, max: 10000)]
-    private int $priceCents;
+    private ?int $priceCents = null;
 
-    public function __construct(Eater $eater, string $person, string $pizzaName, int $priceCents)
+    public function __construct(Eater $eater, string $person, string $pizzaName, ?int $priceCents)
     {
         $this->eater = $eater;
         $this->setPerson($person);
@@ -91,12 +91,17 @@ class Pizza
         return $this->normalizedName;
     }
 
-    public function getPriceCents(): int
+    public function getPriceCents(): ?int
     {
         return $this->priceCents;
     }
 
-    public function setPriceCents(int $priceCents): void
+    public function hasPrice(): bool
+    {
+        return null !== $this->priceCents;
+    }
+
+    public function setPriceCents(?int $priceCents): void
     {
         $this->priceCents = $priceCents;
     }
