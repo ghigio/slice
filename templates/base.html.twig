@@ -24,12 +24,13 @@
         {% endblock %}
     </head>
     <body>
-        <nav class="navbar bg-body-tertiary border-bottom">
-            <div class="container">
-                <a class="navbar-brand fw-semibold" href="{{ path('home') }}">Slice</a>
+        <a href="#contenuto" class="skip-link btn btn-primary">Vai al contenuto</a>
+        <nav class="navbar bg-body-tertiary border-bottom" aria-label="Slice">
+            <div class="container" style="max-width: 40rem">
+                <a class="navbar-brand fw-semibold" href="{{ path('home') }}"><span aria-hidden="true">🍕</span> Slice</a>
             </div>
         </nav>
-        <main class="container py-4">
+        <main id="contenuto" class="container py-4" tabindex="-1">
             {% block body %}{% endblock %}
         </main>
     </body>

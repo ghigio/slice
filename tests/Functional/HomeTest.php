@@ -13,6 +13,6 @@ final class HomeTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextSame('title', 'Slice');
-        self::assertSelectorTextSame('.navbar-brand', 'Slice');
+        self::assertSelectorTextContains('.navbar-brand', 'Slice');
     }
 }

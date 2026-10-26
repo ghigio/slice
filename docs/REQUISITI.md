@@ -270,18 +270,18 @@ I casi seguenti vanno implementati come test unitari di `DiscountCalculator` con
 
 Test di riepilogo (caso 1): Famiglia A con le pizze da 7,00 e 8,00 €, Famiglia B con quelle da 12,00 e 6,50 €; la Famiglia A è dell'organizzatore. Quote attese: A 13,43 € (nessun rimborso), B 16,57 €; totale da ricevere 16,57 €.
 
-Criteri di accettazione:
+Criteri di accettazione (spuntati quelli verificati dai test automatici in `tests/Functional/AcceptanceTest.php` e negli altri test; restano da verificare a mano la prova con due telefoni reali e il funzionamento su fortrabbit con il dominio in HTTPS):
 
-- [ ] Si crea una serata dalla home e si ottiene il link admin con avviso di salvataggio.
-- [ ] Si creano gruppi, se ne indica uno come proprio e si condividono i link (copia e WhatsApp).
+- [x] Si crea una serata dalla home e si ottiene il link admin con avviso di salvataggio.
+- [x] Si creano gruppi, se ne indica uno come proprio e si condividono i link (copia e WhatsApp).
 - [ ] Due membri dello stesso gruppo, da due telefoni, inseriscono pizze e vedono entro 15 secondi quelle dell'altro.
-- [ ] Un link di gruppo non mostra mai pizze, quote o rimborsi di altri gruppi; un link rigenerato rende inutilizzabile il precedente.
-- [ ] La lista per il pizzaiolo aggrega «Margherita», «margherita» e « margherita » in una sola riga e si copia come testo.
-- [ ] Con ordini chiusi, i gruppi non possono aggiungere o modificare pizze, neanche con richieste costruite a mano.
-- [ ] Inserito il totale pagato, ogni gruppo vede prezzi di listino, prezzi scontati, totale per persona e totale da rimborsare; i valori coincidono con quelli dei test.
-- [ ] Cambiando modalità o totale, tutte le quote si aggiornano.
-- [ ] La differenza da arrotondamento compare solo nella pagina admin, con il messaggio corretto.
-- [ ] L'organizzatore segna i rimborsi e vede totale ricevuto e mancante; il gruppo vede «Rimborsato il …».
+- [x] Un link di gruppo non mostra mai pizze, quote o rimborsi di altri gruppi; un link rigenerato rende inutilizzabile il precedente.
+- [x] La lista per il pizzaiolo aggrega «Margherita», «margherita» e « margherita » in una sola riga e si copia come testo.
+- [x] Con ordini chiusi, i gruppi non possono aggiungere o modificare pizze, neanche con richieste costruite a mano.
+- [x] Inserito il totale pagato, ogni gruppo vede prezzi di listino, prezzi scontati, totale per persona e totale da rimborsare; i valori coincidono con quelli dei test.
+- [x] Cambiando modalità o totale, tutte le quote si aggiornano.
+- [x] La differenza da arrotondamento compare solo nella pagina admin, con il messaggio corretto.
+- [x] L'organizzatore segna i rimborsi e vede totale ricevuto e mancante; il gruppo vede «Rimborsato il …».
 - [ ] Tutti i test passano e l'app funziona su fortrabbit con il dominio personalizzato in HTTPS.
 
 ## Fuori ambito e piano di lavoro

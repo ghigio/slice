@@ -12,8 +12,8 @@
                 <thead>
                     <tr>
                         <th scope="col">Gruppo</th>
-                        <th scope="col" class="text-end">Pizze</th>
-                        <th scope="col" class="text-end">Listino</th>
+                        <th scope="col" class="text-end d-none d-sm-table-cell">Pizze</th>
+                        <th scope="col" class="text-end d-none d-sm-table-cell">Listino</th>
                         <th scope="col" class="text-end">Quota</th>
                         <th scope="col">Rimborso</th>
                     </tr>
@@ -22,8 +22,8 @@
                     {% for share in summary.shares %}
                         <tr data-share-row>
                             <td data-share-name>{{ share.eater.name }}</td>
-                            <td class="text-end" data-pizza-count>{{ share.pizzaCount }}</td>
-                            <td class="text-end">{{ share.listCents|money }}</td>
+                            <td class="text-end d-none d-sm-table-cell" data-pizza-count>{{ share.pizzaCount }}</td>
+                            <td class="text-end d-none d-sm-table-cell">{{ share.listCents|money }}</td>
                             <td class="text-end">{{ share.shareCents|money }}</td>
                             <td>
                                 {% if share.owesNothing %}
@@ -52,7 +52,7 @@
             <dt class="col-7">Totale da ricevere</dt><dd class="col-5 text-end" data-to-receive>{{ summary.toReceiveCents|money }}</dd>
             <dt class="col-7">Già ricevuto</dt><dd class="col-5 text-end" data-received>{{ summary.receivedCents|money }}</dd>
             <dt class="col-7">Mancante</dt><dd class="col-5 text-end fw-semibold" data-missing>{{ summary.missingCents|money }}</dd>
-            <dt class="col-7">Differenza da arrotondamento</dt><dd class="col-5 text-end" data-rounding-difference>{{ summary.roundingDifferenceMessage }}</dd>
+            <dt class="col-12 mt-2">Differenza da arrotondamento</dt><dd class="col-12 mb-0" data-rounding-difference>{{ summary.roundingDifferenceMessage }}</dd>
         </dl>
     {% endif %}
 </section>

@@ -5,7 +5,8 @@ framework:
     disallow_search_engine_index: false
     # Proxy davanti all'app (es. su fortrabbit): necessari per vedere l'IP reale dei client nei limiti per IP.
     trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
-    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-host']
+    # Niente x-forwarded-host: esporrebbe ad attacchi sull'header Host se il proxy non lo imposta.
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true

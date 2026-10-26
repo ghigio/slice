@@ -1,1 +1,53 @@
-/* Personalizzazioni di Slice sopra Bootstrap */
+/* Personalizzazioni di Slice sopra Bootstrap: mobile-first, uso con una mano su schermi da 360 px. */
+
+/* Colonna di lettura comoda anche su desktop. */
+main.container {
+    max-width: 40rem;
+}
+
+/* Bersagli touch di almeno 44 px. */
+.btn,
+.form-control,
+.form-select {
+    min-height: 2.75rem;
+}
+
+.form-check {
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.form-check .form-check-input {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+.form-switch .form-check-input {
+    width: 2.75rem;
+}
+
+/* Collegamento «Vai al contenuto» visibile solo da tastiera. */
+.skip-link {
+    position: absolute;
+    left: .5rem;
+    top: -3rem;
+    z-index: 1000;
+}
+
+.skip-link:focus {
+    top: .5rem;
+}
+
+/* Importi allineati in colonna e mai spezzati prima di «€». */
+[data-person-total],
+[data-person-share],
+[data-eater-total],
+td.text-end,
+dd.text-end {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
