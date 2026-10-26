@@ -4,6 +4,7 @@ namespace App\Twig\Components;
 
 use App\Entity\Eater;
 use App\Entity\Pizza;
+use App\Evening\BillSummary;
 use App\Evening\Exception\EveningRuleException;
 use App\Evening\PizzaOrdering;
 use App\Money\MoneyFormatter;
@@ -115,6 +116,12 @@ final class PizzaOrder
 
             return 'Pizza eliminata.';
         });
+    }
+
+    /** Quote del conto per la vista del gruppo; null per l'organizzatore o se il conto non è inserito. */
+    public function getBill(): ?BillSummary
+    {
+        return $this->asOrganizer ? null : BillSummary::forEvening($this->eater->getEvening());
     }
 
     public function canEdit(): bool

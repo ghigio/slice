@@ -120,6 +120,8 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Per ogni gruppo diverso dal proprio: interruttore «Ha rimborsato», con data e ora registrate automaticamente.
 - Totale da ricevere, totale già ricevuto, totale mancante.
 - Riga «Differenza da arrotondamento»: somma delle quote meno totale pagato, mostrata solo all'organizzatore (vedi la sezione sull'algoritmo).
+- Dettagli di implementazione del conto: il totale pagato va da 0,01 € a 50.000,00 € (virgola o punto, al massimo due decimali). L'anteprima si aggiorna mentre si digita e il pulsante «Conferma conto» (poi «Aggiorna conto») compare solo se il calcolo è possibile; con totale pagato maggiore del totale da listino serve la casella «Confermo l'importo». Lo sconto in percentuale ha due decimali (es. «10,45 %»); con maggiorazione si mostra «Maggiorazione applicata». Con conto inserito sono rifiutate le modifiche alle pizze che renderebbero impossibile il calcolo in modalità uguale (con la pizza coinvolta e il suggerimento della modalità proporzionale) e l'eliminazione dell'ultima pizza.
+- Rimborsi: l'interruttore registra data e ora (fuso Europe/Rome, impostato per tutta l'app); non compare per il gruppo dell'organizzatore né per i gruppi senza pizze, che mostrano «Nessun rimborso dovuto». Se il gruppo dell'organizzatore non è indicato, il riepilogo lo segnala e tutti i gruppi risultano da rimborsare. Riepilogo e pannello di stato si aggiornano subito dopo la conferma del conto e con polling ogni 5 secondi.
 
 ### Gruppo (`/g/{token_gruppo}`)
 

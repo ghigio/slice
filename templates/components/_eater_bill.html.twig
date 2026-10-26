@@ -1,0 +1,42 @@
+{# Conto visto dal gruppo: solo le proprie pizze e la propria quota, mai la differenza da arrotondamento. #}
+{% set share = bill.share(eater) %}
+<div data-bill-view>
+    <div class="card card-body mb-4">
+        <p class="mb-1">La vostra quota: <strong>{{ share.shareCents|money }}</strong> (listino {{ share.listCents|money }})</p>
+        <p class="mb-1">{{ bill.isSurcharge ? 'Maggiorazione applicata' : 'Sconto applicato' }}: {{ bill.discountPercentText }}</p>
+        {% if share.owesNothing %}
+            <p class="fs-5 fw-semibold mb-0">Nessun rimborso dovuto</p>
+        {% else %}
+            <p class="fs-5 mb-1">Totale da rimborsare a {{ evening.organizerName }}: <strong data-amount-due>{{ share.dueCents|money }}</strong></p>
+            {% if share.isReimbursed %}
+                <p class="mb-0"><span class="badge text-bg-success">Rimborsato il {{ eater.reimbursedAt|date('d/m/Y') }}</span></p>
+            {% else %}
+                <p class="mb-0"><span class="badge text-bg-warning">Da rimborsare</span></p>
+            {% endif %}
+            {% if evening.refundNotes %}
+                <p class="mt-2 mb-0 small">Come rimborsare: {{ evening.refundNotes|nl2br }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% for person in bill.personTotals(eater) %}
+        <div class="mb-3" data-person-block>
+            <div class="d-flex justify-content-between align-items-baseline border-bottom mb-1">
+                <h3 class="h6 mb-1" data-person-name>{{ person.person }}</h3>
+                <span class="fw-semibold" data-person-share>{{ person.shareCents|money }}</span>
+            </div>
+            <ul class="list-unstyled mb-0">
+                {% for pizza in eater.pizzas|filter(p => p.person == person.person) %}
+                    {% set discounted = bill.discountedPriceCents(pizza) %}
+                    <li class="d-flex gap-2 py-1">
+                        <span class="flex-grow-1">{{ pizza.pizzaName }}</span>
+                        {% if discounted != pizza.priceCents %}
+                            <del class="text-body-secondary" aria-label="Prezzo di listino">{{ pizza.priceCents|money }}</del>
+                        {% endif %}
+                        <span aria-label="Prezzo scontato">{{ discounted|money }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+</div>

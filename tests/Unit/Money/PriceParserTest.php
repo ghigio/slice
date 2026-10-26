@@ -48,4 +48,32 @@ final class PriceParserTest extends TestCase
         yield 'oltre il massimo' => ['100,01', $range];
         yield 'molto oltre' => ['250', $range];
     }
+
+    #[DataProvider('validTotals')]
+    public function testTotalePagato(string $input, int $cents): void
+    {
+        self::assertSame($cents, PriceParser::parseTotalCents($input));
+    }
+
+    public static function validTotals(): iterable
+    {
+        yield 'intero' => ['30', 3000];
+        yield 'decimali' => ['29,99', 2999];
+        yield 'oltre cento euro' => ['1234.5', 123450];
+        yield 'massimo' => ['50000', 5000000];
+    }
+
+    #[DataProvider('invalidTotals')]
+    public function testTotalePagatoNonValido(string $input, string $message): void
+    {
+        $this->expectExceptionObject(new InvalidPriceException($message));
+        PriceParser::parseTotalCents($input);
+    }
+
+    public static function invalidTotals(): iterable
+    {
+        yield 'vuoto' => ['', 'Inserisci un importo valido, per esempio 30,00.'];
+        yield 'zero' => ['0', 'Il totale pagato deve essere tra 0,01 € e 50.000,00 €.'];
+        yield 'oltre il massimo' => ['50000,01', 'Il totale pagato deve essere tra 0,01 € e 50.000,00 €.'];
+    }
 }

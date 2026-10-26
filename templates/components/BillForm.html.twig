@@ -1,0 +1,71 @@
+<section {{ attributes }} class="mb-4">
+    <h2 class="h5">Conto</h2>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    {% if evening.status.value == 'orders_open' %}
+        <p class="text-body-secondary">Chiudi gli ordini per inserire il conto.</p>
+    {% elseif evening.isArchived %}
+        <p class="text-body-secondary">Serata archiviata: il conto è in sola lettura.</p>
+    {% else %}
+        <p class="mb-2" data-list-total>Totale da listino: <strong>{{ this.listTotalCents|money }}</strong></p>
+
+        <div class="mb-3">
+            <label for="paid-total-{{ evening.id }}" class="form-label">Totale pagato (€)</label>
+            <input id="paid-total-{{ evening.id }}" type="text" inputmode="decimal" class="form-control form-control-lg"
+                   placeholder="30,00" data-model="debounce(400)|paidTotal" value="{{ paidTotal }}">
+            <div class="form-text">L'importo dello scontrino, anche se arrotondato dal pizzaiolo.</div>
+        </div>
+
+        <fieldset class="mb-3">
+            <legend class="form-label fs-6">Come distribuire lo sconto</legend>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" id="mode-proportional-{{ evening.id }}" name="mode" value="proportional"
+                       data-model="mode" {{ mode == 'proportional' ? 'checked' }}>
+                <label class="form-check-label" for="mode-proportional-{{ evening.id }}">Proporzionale al prezzo</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" id="mode-equal-{{ evening.id }}" name="mode" value="equal"
+                       data-model="mode" {{ mode == 'equal' ? 'checked' }}>
+                <label class="form-check-label" for="mode-equal-{{ evening.id }}">Uguale per ogni pizza</label>
+            </div>
+        </fieldset>
+
+        {% if this.previewError %}
+            <div class="alert alert-danger" role="alert">{{ this.previewError }}</div>
+        {% elseif this.preview %}
+            {% set preview = this.preview %}
+            <div class="card card-body mb-3" data-bill-preview>
+                <p class="mb-2">
+                    {% if preview.isSurcharge %}Maggiorazione{% else %}Sconto{% endif %} totale:
+                    <strong>{{ (preview.discountCents|abs)|money }}</strong> ({{ preview.discountPercentText }})
+                </p>
+                <table class="table table-sm mb-0">
+                    <thead><tr><th scope="col">Gruppo</th><th scope="col" class="text-end">Quota</th></tr></thead>
+                    <tbody>
+                        {% for share in preview.shares %}
+                            <tr data-share-row>
+                                <td data-share-name>{{ share.eater.name }}</td>
+                                <td class="text-end">{{ share.shareCents|money }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if preview.isSurcharge %}
+                <div class="alert alert-warning" role="alert" data-surcharge-warning>
+                    Il totale pagato è maggiore del totale da listino: di solito è un errore di inserimento.
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="surcharge-{{ evening.id }}" data-model="surchargeConfirmed" {{ surchargeConfirmed ? 'checked' }}>
+                        <label class="form-check-label" for="surcharge-{{ evening.id }}">Confermo l'importo</label>
+                    </div>
+                </div>
+            {% endif %}
+
+            <button type="button" class="btn btn-primary btn-lg w-100" data-action="live#action" data-live-action-param="save">
+                {{- this.isUpdate ? 'Aggiorna conto' : 'Conferma conto' -}}
+            </button>
+        {% endif %}
+    {% endif %}
+</section>

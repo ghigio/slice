@@ -178,6 +178,28 @@ class Evening
         $this->transition(EveningStatus::Archived, EveningStatus::BillEntered);
     }
 
+    /** Inserisce il conto (da Ordini chiusi) o lo modifica (in Conto inserito); le quote si ricalcolano a ogni lettura. */
+    public function enterBill(int $paidTotalCents, DiscountMode $discountMode): void
+    {
+        if (!\in_array($this->status, [EveningStatus::OrdersClosed, EveningStatus::BillEntered], true)) {
+            throw new InvalidTransitionException($this->status);
+        }
+        $this->paidTotalCents = $paidTotalCents;
+        $this->discountMode = $discountMode;
+        $this->status = EveningStatus::BillEntered;
+    }
+
+    public function hasBill(): bool
+    {
+        return \in_array($this->status, [EveningStatus::BillEntered, EveningStatus::Archived], true) && null !== $this->paidTotalCents;
+    }
+
+    /** I rimborsi si segnano solo con conto inserito o serata archiviata. */
+    public function canRecordReimbursements(): bool
+    {
+        return \in_array($this->status, [EveningStatus::BillEntered, EveningStatus::Archived], true);
+    }
+
     public function isArchived(): bool
     {
         return EveningStatus::Archived === $this->status;

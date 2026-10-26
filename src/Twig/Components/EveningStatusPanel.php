@@ -7,6 +7,7 @@ use App\Evening\EveningAdministration;
 use App\Evening\Exception\EveningRuleException;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -50,6 +51,11 @@ final class EveningStatusPanel
     public function unarchive(): void
     {
         $this->apply(fn () => $this->administration->unarchive($this->evening), 'Serata riaperta.');
+    }
+
+    #[LiveListener('billUpdated')]
+    public function refresh(): void
+    {
     }
 
     private function apply(callable $operation, string $notice): void

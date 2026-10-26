@@ -97,6 +97,16 @@ class Eater
         $this->reimbursedAt = $reimbursedAt;
     }
 
+    public function markReimbursed(\DateTimeImmutable $at): void
+    {
+        $this->reimbursedAt = $at;
+    }
+
+    public function clearReimbursed(): void
+    {
+        $this->reimbursedAt = null;
+    }
+
     /** @return Collection<int, Pizza> */
     public function getPizzas(): Collection
     {

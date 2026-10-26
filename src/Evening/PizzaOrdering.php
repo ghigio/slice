@@ -2,12 +2,15 @@
 
 namespace App\Evening;
 
+use App\Discount\DiscountCalculator;
+use App\Discount\Exception\NegativeDiscountedPriceException;
 use App\Entity\Eater;
 use App\Entity\Evening;
 use App\Entity\Pizza;
 use App\Enum\EveningStatus;
 use App\Evening\Exception\EveningRuleException;
 use App\Money\InvalidPriceException;
+use App\Money\MoneyFormatter;
 use App\Money\PriceParser;
 use App\Text\NameNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,6 +37,7 @@ final class PizzaOrdering
         if ($this->countPizzas($evening) >= self::MAX_PIZZAS_PER_EVENING) {
             throw new EveningRuleException(sprintf('La serata ha raggiunto il limite di %d pizze.', self::MAX_PIZZAS_PER_EVENING));
         }
+        $this->assertBillStillComputable($evening, fn (array $prices) => $prices + ['new' => $priceCents], ['new' => [$pizzaName, $person, $eater->getName()]]);
 
         $pizza = new Pizza($eater, $person, $pizzaName, $priceCents);
         $this->em->persist($pizza);
@@ -47,6 +51,8 @@ final class PizzaOrdering
         $this->assertCanEdit($eater->getEvening(), $asOrganizer);
         $pizza = $this->pizza($eater, $pizzaId);
         [$person, $pizzaName, $priceCents] = $this->validate($person, $pizzaName, $price);
+        $key = spl_object_id($pizza);
+        $this->assertBillStillComputable($eater->getEvening(), fn (array $prices) => array_replace($prices, [$key => $priceCents]), [$key => [$pizzaName, $person, $eater->getName()]]);
 
         $pizza->setPerson($person);
         $pizza->setPizzaName($pizzaName);
@@ -58,6 +64,8 @@ final class PizzaOrdering
     {
         $this->assertCanEdit($eater->getEvening(), $asOrganizer);
         $pizza = $this->pizza($eater, $pizzaId);
+        $key = spl_object_id($pizza);
+        $this->assertBillStillComputable($eater->getEvening(), fn (array $prices) => array_diff_key($prices, [$key => true]), []);
 
         $eater->removePizza($pizza);
         $this->em->remove($pizza);
@@ -78,6 +86,43 @@ final class PizzaOrdering
         throw new EveningRuleException($asOrganizer
             ? 'La serata è archiviata: riaprila per modificarla.'
             : "Ordini chiusi dall'organizzatore.");
+    }
+
+    /**
+     * Con il conto inserito le quote devono restare calcolabili: simula la modifica sui prezzi e la rifiuta se
+     * non restano pizze o se, in modalità uguale, una pizza andrebbe sotto zero.
+     *
+     * @param callable(array<int|string, int>): array<int|string, int> $change    prezzi attuali => prezzi dopo la modifica
+     * @param array<int|string, array{string, string, string}>       $described nome, persona e gruppo aggiornati delle pizze toccate
+     */
+    private function assertBillStillComputable(Evening $evening, callable $change, array $described): void
+    {
+        if (!$evening->hasBill()) {
+            return;
+        }
+
+        $prices = [];
+        $current = [];
+        foreach ($evening->getEaters() as $eater) {
+            foreach ($eater->getPizzas() as $pizza) {
+                $prices[spl_object_id($pizza)] = $pizza->getPriceCents();
+                $current[spl_object_id($pizza)] = [$pizza->getPizzaName(), $pizza->getPerson(), $eater->getName()];
+            }
+        }
+        $prices = $change($prices);
+        if ([] === $prices) {
+            throw new EveningRuleException('Con il conto inserito deve restare almeno una pizza.');
+        }
+
+        try {
+            (new DiscountCalculator())->calculate($prices, $evening->getPaidTotalCents(), $evening->getDiscountMode());
+        } catch (NegativeDiscountedPriceException $e) {
+            [$name, $person, $eaterName] = $described[$e->pizzaKey] ?? $current[$e->pizzaKey];
+            throw new EveningRuleException(sprintf(
+                'Con questa modifica, in modalità uguale, la pizza %s di %s (%s) da %s andrebbe a %s: passa alla modalità proporzionale.',
+                $name, $person, $eaterName, MoneyFormatter::format($e->listPriceCents), MoneyFormatter::format($e->discountedPriceCents),
+            ), 0, $e);
+        }
     }
 
     private function pizza(Eater $eater, int $pizzaId): Pizza

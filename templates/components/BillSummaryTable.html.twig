@@ -1,0 +1,58 @@
+<section {{ attributes }} data-poll="delay(5000)|$render" class="mb-4">
+    {% set summary = this.summary %}
+    {% if summary %}
+        <h2 class="h5">Riepilogo e rimborsi</h2>
+        {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+        {% if not summary.hasOrganizerEater %}
+            <div class="alert alert-info" role="status">Indica il tuo gruppo nella lista dei gruppi: finché non lo fai, anche il tuo gruppo risulta da rimborsare.</div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Gruppo</th>
+                        <th scope="col" class="text-end">Pizze</th>
+                        <th scope="col" class="text-end">Listino</th>
+                        <th scope="col" class="text-end">Quota</th>
+                        <th scope="col">Rimborso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for share in summary.shares %}
+                        <tr data-share-row>
+                            <td data-share-name>{{ share.eater.name }}</td>
+                            <td class="text-end" data-pizza-count>{{ share.pizzaCount }}</td>
+                            <td class="text-end">{{ share.listCents|money }}</td>
+                            <td class="text-end">{{ share.shareCents|money }}</td>
+                            <td>
+                                {% if share.owesNothing %}
+                                    <span class="text-body-secondary">Nessun rimborso dovuto</span>
+                                {% else %}
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="reimbursed-{{ share.eater.id }}"
+                                               data-action="live#action" data-live-action-param="toggleReimbursed"
+                                               data-live-eater-id-param="{{ share.eater.id }}"
+                                               data-live-reimbursed-param="{{ share.isReimbursed ? 'false' : 'true' }}"
+                                               {{ share.isReimbursed ? 'checked' }}>
+                                        <label class="form-check-label" for="reimbursed-{{ share.eater.id }}">Ha rimborsato</label>
+                                    </div>
+                                    {% if share.isReimbursed %}
+                                        <span class="small text-body-secondary">il {{ share.eater.reimbursedAt|date('d/m/Y') }} alle {{ share.eater.reimbursedAt|date('H:i') }}</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <dl class="row mb-0">
+            <dt class="col-7">Totale da ricevere</dt><dd class="col-5 text-end" data-to-receive>{{ summary.toReceiveCents|money }}</dd>
+            <dt class="col-7">Già ricevuto</dt><dd class="col-5 text-end" data-received>{{ summary.receivedCents|money }}</dd>
+            <dt class="col-7">Mancante</dt><dd class="col-5 text-end fw-semibold" data-missing>{{ summary.missingCents|money }}</dd>
+            <dt class="col-7">Differenza da arrotondamento</dt><dd class="col-5 text-end" data-rounding-difference>{{ summary.roundingDifferenceMessage }}</dd>
+        </dl>
+    {% endif %}
+</section>
