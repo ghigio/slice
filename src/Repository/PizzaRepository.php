@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Eater;
 use App\Entity\Evening;
 use App\Entity\Pizza;
+use App\Text\PreferredForm;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -35,21 +36,15 @@ class PizzaRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
 
-        // Per ogni nome normalizzato: conteggio e ultima posizione di ogni forma digitata, ultimo prezzo.
         $groups = [];
-        foreach ($rows as $position => $row) {
-            $key = $row['normalizedName'];
-            $form = $row['pizzaName'];
-            $groups[$key]['count'][$form] = ($groups[$key]['count'][$form] ?? 0) + 1;
-            $groups[$key]['lastSeen'][$form] = $position;
-            $groups[$key]['priceCents'] = $row['priceCents'];
+        foreach ($rows as $row) {
+            $groups[$row['normalizedName']]['forms'][] = $row['pizzaName'];
+            $groups[$row['normalizedName']]['priceCents'] = $row['priceCents'];
         }
 
         $suggestions = [];
         foreach ($groups as $group) {
-            $forms = array_keys($group['count']);
-            usort($forms, fn ($a, $b) => [$group['count'][$b], $group['lastSeen'][$b]] <=> [$group['count'][$a], $group['lastSeen'][$a]]);
-            $suggestions[] = ['name' => (string) $forms[0], 'priceCents' => $group['priceCents']];
+            $suggestions[] = ['name' => PreferredForm::pick($group['forms']), 'priceCents' => $group['priceCents']];
         }
         usort($suggestions, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
 
@@ -66,5 +61,18 @@ class PizzaRepository extends ServiceEntityRepository
             ->orderBy('p.person', 'ASC')
             ->getQuery()
             ->getArrayResult(), 'person');
+    }
+
+    /** @return list<Pizza> pizze della serata in ordine di inserimento, con il gruppo già caricato */
+    public function findForEvening(Evening $evening): array
+    {
+        return $this->createQueryBuilder('p')
+            ->addSelect('e')
+            ->join('p.eater', 'e')
+            ->where('e.evening = :evening')
+            ->setParameter('evening', $evening)
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 }

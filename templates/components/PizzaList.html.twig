@@ -1,0 +1,58 @@
+<section {{ attributes }} data-poll="delay(5000)|$render" class="mb-4">
+    {% set list = this.list %}
+    <h2 class="h5">Lista per il pizzaiolo</h2>
+
+    {% if list.total == 0 %}
+        <p class="text-body-secondary">Ancora nessuna pizza inserita.</p>
+    {% else %}
+        {% set conflicts = list.priceConflicts %}
+        {% if conflicts is not empty %}
+            <div class="alert alert-warning" role="alert" data-price-conflicts>
+                <strong>Prezzi diversi per la stessa pizza:</strong> controlla se ci sono errori di inserimento.
+                {% for conflict in conflicts %}
+                    <p class="mb-0 mt-2 fw-semibold">{{ conflict.name }}</p>
+                    <ul class="mb-0">
+                        {% for row in conflict.rows %}
+                            <li>{{ row.eater }} · {{ row.person }} · {{ row.pizzaName }}: {{ row.priceCents|money }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="btn-group w-100 mb-3" role="group" aria-label="Vista della lista">
+            <button type="button" class="btn {{ view == 'pizzas' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                    data-action="live#update" data-model="view" value="pizzas" aria-pressed="{{ view == 'pizzas' ? 'true' : 'false' }}">Per pizza</button>
+            <button type="button" class="btn {{ view == 'eaters' ? 'btn-secondary' : 'btn-outline-secondary' }}"
+                    data-action="live#update" data-model="view" value="eaters" aria-pressed="{{ view == 'eaters' ? 'true' : 'false' }}">Per gruppo</button>
+        </div>
+
+        {% if view == 'eaters' %}
+            {% for group in list.byEater %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between border-bottom mb-1">
+                        <h3 class="h6 mb-1" data-list-eater>{{ group.eater }}</h3>
+                        <span class="text-body-secondary">{{ group.total }} {{ group.total == 1 ? 'pizza' : 'pizze' }}</span>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                        {% for line in group.lines %}<li>{{ line.quantity }} x {{ line.name }}</li>{% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        {% else %}
+            <ul class="list-unstyled fs-5 mb-2">
+                {% for line in list.lines %}
+                    <li data-pizza-line><strong>{{ line.quantity }} x</strong> {{ line.name }}</li>
+                {% endfor %}
+            </ul>
+            <div {{ stimulus_controller('clipboard', {success: 'Lista copiata'}) }}>
+                <label for="pizza-list-text-{{ evening.id }}" class="visually-hidden">Lista in testo semplice</label>
+                <textarea id="pizza-list-text-{{ evening.id }}" class="form-control mb-2" rows="3" readonly {{ stimulus_target('clipboard', 'source') }}>{{ list.asText }}</textarea>
+                <button type="button" class="btn btn-primary btn-lg w-100" {{ stimulus_action('clipboard', 'copy') }}>Copia lista</button>
+                <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
+            </div>
+        {% endif %}
+
+        <p class="fw-semibold border-top pt-2 mt-3 mb-0" data-pizza-total>Totale: {{ list.total }} {{ list.total == 1 ? 'pizza' : 'pizze' }}</p>
+    {% endif %}
+</section>

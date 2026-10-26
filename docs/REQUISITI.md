@@ -104,6 +104,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Pulsante «Copia lista» in testo semplice (es. `3 x Margherita`).
 - Vista alternativa per gruppo, utile per la consegna ai tavoli.
 - Avviso se la stessa pizza ha prezzi diversi tra gruppi (possibile errore di inserimento), con l'elenco delle righe coinvolte.
+- Dettagli di implementazione: il testo copiato contiene solo le righe `quantità x nome` in ordine alfabetico (senza distinzione di maiuscole e accenti); il totale delle pizze è mostrato a schermo. Il nome mostrato è la forma digitata più frequente, a parità la più recente. La vista per gruppo riporta le quantità per pizza di ogni gruppo. L'avviso compare quando due pizze con lo stesso nome normalizzato hanno prezzi diversi in gruppi diversi (prezzi diversi nello stesso gruppo non generano avviso) ed elenca tutte le righe di quella pizza con gruppo, persona, nome digitato e prezzo. La lista si aggiorna con polling ogni 5 secondi.
 
 **Conto e sconto**
 
