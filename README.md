@@ -111,6 +111,8 @@ I limiti per IP funzionano solo se l'app vede l'IP reale dei client. La document
 3. Se «IP del client» è un indirizzo interno e il tuo IP compare in `X-Forwarded-For`, l'app è dietro un proxy. Se conosci gli indirizzi del proxy, indicali (`TRUSTED_PROXIES=10.0.0.0/8`, per esempio); altrimenti la documentazione Symfony consente `TRUSTED_PROXIES=127.0.0.1,REMOTE_ADDR` solo se l'app è raggiungibile esclusivamente attraverso il proxy, perché in caso contrario un client potrebbe falsificare il proprio IP. Nel dubbio chiedi conferma al supporto fortrabbit.
 4. Ripeti il punto 1: «IP del client» deve mostrare il tuo IP pubblico.
 
+Esito della verifica (26/10/2026): da rete mobile «IP del client» coincide con l'IP pubblico del telefono, quindi l'app riceve direttamente l'IP reale e `TRUSTED_PROXIES` **non va impostata**. Se in futuro si aggiunge un proxy (per esempio Cloudflare), la verifica va ripetuta.
+
 ### 6. Dominio personalizzato e HTTPS
 
 1. In dashboard: *New* → *Add a new domain*, scegli l'environment, il tipo *external domain* e inserisci il sottodominio (es. `pizza.tuodominio.it`).
