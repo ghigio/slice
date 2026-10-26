@@ -1,0 +1,94 @@
+<section {{ attributes }} data-poll="delay(5000)|$render">
+    {% set editable = this.canEdit %}
+    {% set list_id = 'eater-' ~ eater.id %}
+
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    {% if not editable %}
+        <div class="alert alert-secondary" role="status">
+            {{ asOrganizer ? 'Serata archiviata: sola lettura.' : "Ordini chiusi dall'organizzatore." }}
+        </div>
+    {% else %}
+        <form class="card card-body mb-4" data-action="live#action:prevent" data-live-action-param="add"
+              {{ stimulus_controller('pizza-price', {prices: this.suggestedPrices}) }}>
+            <div class="mb-2">
+                <label for="{{ list_id }}-person" class="form-label">Persona</label>
+                <input id="{{ list_id }}-person" type="text" class="form-control form-control-lg" maxlength="60" autocomplete="off"
+                       list="{{ list_id }}-persons" data-model="norender|person" value="{{ person }}" required>
+            </div>
+            <div class="mb-2">
+                <label for="{{ list_id }}-pizza" class="form-label">Pizza</label>
+                <input id="{{ list_id }}-pizza" type="text" class="form-control form-control-lg" maxlength="80" autocomplete="off"
+                       list="{{ list_id }}-pizzas" data-model="norender|pizzaName" value="{{ pizzaName }}" required
+                       {{ stimulus_target('pizza-price', 'name') }} data-action="input->pizza-price#suggest">
+            </div>
+            <div class="mb-3">
+                <label for="{{ list_id }}-price" class="form-label">Prezzo (€)</label>
+                <input id="{{ list_id }}-price" type="text" inputmode="decimal" class="form-control form-control-lg" placeholder="7,50"
+                       data-model="norender|price" value="{{ price }}" required {{ stimulus_target('pizza-price', 'price') }}>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Aggiungi pizza</button>
+        </form>
+    {% endif %}
+
+    {# Solo nomi e prezzi delle pizze della serata, nessun dato personale di altri gruppi. #}
+    <datalist id="{{ list_id }}-pizzas" data-pizza-suggestions>
+        {% for suggestion in this.pizzaSuggestions %}<option value="{{ suggestion.name }}"></option>{% endfor %}
+    </datalist>
+    <datalist id="{{ list_id }}-persons" data-person-suggestions>
+        {% for name in this.personSuggestions %}<option value="{{ name }}"></option>{% endfor %}
+    </datalist>
+
+    {% set groups = this.byPerson %}
+    {% if groups is empty %}
+        <p class="text-body-secondary">Nessuna pizza inserita.</p>
+    {% endif %}
+
+    <div {{ stimulus_controller('confirm') }}>
+        {% for person_name, group in groups %}
+            <div class="mb-3" data-person-block>
+                <div class="d-flex justify-content-between align-items-baseline border-bottom mb-1">
+                    <h3 class="h6 mb-1" data-person-name>{{ person_name }}</h3>
+                    <span class="fw-semibold" data-person-total>{{ group.totalCents|money }}</span>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    {% for pizza in group.pizzas %}
+                        <li class="py-1">
+                            {% if editable and editingId == pizza.id %}
+                                <form class="card card-body" data-action="live#action:prevent" data-live-action-param="save">
+                                    <label class="form-label" for="edit-person-{{ pizza.id }}">Persona</label>
+                                    <input id="edit-person-{{ pizza.id }}" type="text" class="form-control mb-2" maxlength="60" list="{{ list_id }}-persons" data-model="norender|editPerson" value="{{ editPerson }}">
+                                    <label class="form-label" for="edit-pizza-{{ pizza.id }}">Pizza</label>
+                                    <input id="edit-pizza-{{ pizza.id }}" type="text" class="form-control mb-2" maxlength="80" list="{{ list_id }}-pizzas" data-model="norender|editPizzaName" value="{{ editPizzaName }}">
+                                    <label class="form-label" for="edit-price-{{ pizza.id }}">Prezzo (€)</label>
+                                    <input id="edit-price-{{ pizza.id }}" type="text" inputmode="decimal" class="form-control mb-2" data-model="norender|editPrice" value="{{ editPrice }}">
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Salva</button>
+                                        <button type="button" class="btn btn-link" data-action="live#action" data-live-action-param="cancelEdit">Annulla</button>
+                                    </div>
+                                </form>
+                            {% else %}
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span class="flex-grow-1">{{ pizza.pizzaName }}</span>
+                                    <span>{{ pizza.priceCents|money }}</span>
+                                    {% if editable %}
+                                        <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                                data-live-action-param="startEdit" data-live-pizza-id-param="{{ pizza.id }}">Modifica</button>
+                                        <button type="button" class="btn btn-outline-danger" data-action="confirm#ask live#action"
+                                                data-live-action-param="delete" data-live-pizza-id-param="{{ pizza.id }}"
+                                                data-confirm-message-param="Eliminare {{ pizza.pizzaName }} di {{ pizza.person }}?">Elimina</button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p class="d-flex justify-content-between fs-5 border-top pt-2 mb-0" data-eater-total>
+        <span>Totale del gruppo</span><strong>{{ this.totalCents|money }}</strong>
+    </p>
+</section>

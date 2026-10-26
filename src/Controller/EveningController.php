@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Eater;
 use App\Entity\Evening;
 use App\Form\Data\NewEveningData;
 use App\Form\NewEveningType;
@@ -10,6 +11,7 @@ use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class EveningController extends AbstractController
@@ -38,5 +40,17 @@ final class EveningController extends AbstractController
     public function admin(#[MapEntity(mapping: ['adminToken' => 'adminToken'])] Evening $evening): Response
     {
         return $this->render('evening/admin.html.twig', ['evening' => $evening]);
+    }
+
+    #[Route('/s/{adminToken}/g/{token}', name: 'evening_eater_pizzas', requirements: ['adminToken' => '[0-9a-f]{64}', 'token' => '[0-9a-f]{64}'], methods: ['GET'])]
+    public function eaterPizzas(
+        #[MapEntity(mapping: ['adminToken' => 'adminToken'])] Evening $evening,
+        #[MapEntity(mapping: ['token' => 'token'])] Eater $eater,
+    ): Response {
+        if ($eater->getEvening() !== $evening) {
+            throw new NotFoundHttpException();
+        }
+
+        return $this->render('evening/eater_pizzas.html.twig', ['evening' => $evening, 'eater' => $eater]);
     }
 }

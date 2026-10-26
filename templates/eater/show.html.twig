@@ -6,8 +6,9 @@
     <header class="mb-4">
         <h1 class="h3 mb-1">{{ evening.name }}</h1>
         <p class="text-body-secondary mb-0">
-            {{ evening.date|date }}{% if evening.pizzeria %} · {{ evening.pizzeria }}{% endif %} · {{ eater.name }}
+            {{ evening.date|date }}{% if evening.pizzeria %} · {{ evening.pizzeria }}{% endif %}
         </p>
+        <p class="fs-5 fw-semibold mb-0">{{ eater.name }}</p>
     </header>
-    {# Inserimento delle pizze: fase 6. #}
+    <twig:PizzaOrder eater="{{ eater }}" />
 {% endblock %}

@@ -103,6 +103,11 @@ class Eater
         return $this->pizzas;
     }
 
+    public function removePizza(Pizza $pizza): void
+    {
+        $this->pizzas->removeElement($pizza);
+    }
+
     /** @internal Chiamato dal costruttore di Pizza. */
     public function addPizza(Pizza $pizza): void
     {

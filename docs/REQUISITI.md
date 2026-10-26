@@ -131,6 +131,8 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Con conto inserito: per ogni pizza prezzo di listino e prezzo scontato; totale per persona; totale da rimborsare all'organizzatore; sconto applicato in percentuale; note per il rimborso; stato «Rimborsato il …» oppure «Da rimborsare».
 - Il gruppo dell'organizzatore vede la propria quota con la dicitura «Nessun rimborso dovuto».
 - Un gruppo non vede le pizze, le quote né lo stato dei rimborsi degli altri gruppi.
+- Dettagli di implementazione: il prezzo accetta interi o al massimo due decimali, con virgola o punto ed eventuale simbolo «€» (es. «7», «7,5», «7.50 €»). Dopo l'inserimento il campo persona resta compilato per aggiungere più pizze alla stessa persona. I suggerimenti mostrano solo nomi e ultimo prezzo delle pizze della serata, mai nomi di persone o gruppi altrui; a parità di frequenza vince la forma digitata più recente. Al massimo 300 pizze per serata. Pagine e liste si aggiornano con polling ogni 5 secondi.
+- L'organizzatore modifica le pizze di un gruppo dalla pagina `/s/{token_admin}/g/{token_gruppo}`, raggiungibile dal pulsante «Pizze» nella lista gruppi.
 
 ## Modello dati
 

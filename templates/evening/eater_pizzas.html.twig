@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ eater.name }} · {{ evening.name }} · Slice{% endblock %}
+
+{% block body %}
+    <a href="{{ path('evening_admin', {adminToken: evening.adminToken}) }}" class="d-inline-block mb-3">← Torna alla serata</a>
+    <header class="mb-4">
+        <h1 class="h3 mb-1">{{ eater.name }}</h1>
+        <p class="text-body-secondary mb-0">{{ evening.name }} · {{ evening.date|date }}</p>
+    </header>
+    <twig:PizzaOrder eater="{{ eater }}" asOrganizer="{{ true }}" />
+{% endblock %}
