@@ -12,6 +12,11 @@ if ($_SERVER['APP_DEBUG']) {
     umask(0000);
 }
 
+// Cache di test ripulita: con debug disattivato (pagine di errore) Symfony non ricostruisce il container.
+if ('test' === $_SERVER['APP_ENV']) {
+    (new Symfony\Component\Filesystem\Filesystem())->remove(dirname(__DIR__).'/var/cache/test');
+}
+
 // Database di test ricreato a ogni esecuzione applicando le migrazioni, così vengono verificate anche loro.
 if ('test' === $_SERVER['APP_ENV']) {
     $dataDir = dirname(__DIR__).'/var/data';

@@ -34,14 +34,14 @@ Verifiche da fare su fortrabbit prima di adottare SQLite (se una fallisce si usa
 | Framework | Symfony, ultima versione stabile (8.x) |
 | Persistenza | Doctrine ORM e Doctrine Migrations |
 | Interfaccia | Twig + Symfony UX Live Components e Turbo; Bootstrap 5.3 tramite AssetMapper (importmap), senza Node né build frontend |
-| Aggiornamento dati | Polling dei Live Components ogni 5 secondi, niente websocket |
+| Aggiornamento dati | Polling dei Live Components ogni 15 secondi, niente websocket |
 | Database | SQLite in `var/data/app.db`, fuori dalla cartella pubblica e non versionato, con `journal_mode=WAL` e `foreign_keys=ON`; alternativa MySQL di fortrabbit |
-| Altri componenti | Validator, protezione CSRF, RateLimiter, Scheduler (o comando console lanciato dal cron di fortrabbit) |
+| Altri componenti | Validator, protezione CSRF, RateLimiter; job periodici avviati da un URL segreto (vedi «Sicurezza e privacy») |
 | Test | PHPUnit, con test unitari sull'algoritmo di sconto e test funzionali sui flussi |
 | Ambiente locale | Lando, servizio unico PHP 8.4 + Apache, nessun database server |
 | Deploy | Push sul repository GitHub `slice`, collegato a fortrabbit tramite GitHub App; impostazioni versionate in `.fortrabbit/deploy.yml` (comandi di build, migrazioni Doctrine dopo il deploy, esclusione di `/var/data` e `/var/backups`) |
 
-Con SQLite serve un comando `app:db:backup` schedulato una volta al giorno: crea una copia coerente del database con `VACUUM INTO` in `var/backups/` e conserva le ultime 7 copie. Con MySQL il comando non serve.
+Con SQLite serve un backup giornaliero (comando `app:db:backup`, avviato anche dall'URL segreto dei job): crea una copia coerente del database con `VACUUM INTO` in `var/backups/` e conserva le ultime 7 copie. Con MySQL il comando non serve.
 
 Claude Code deve includere un file `README.md` con le istruzioni di installazione locale, la configurazione delle variabili d'ambiente (incluse le due varianti di `DATABASE_URL`), i passi di deploy su fortrabbit (GitHub App e deploy file), il collegamento del dominio personalizzato e come scaricare i backup. Prima di scrivere le istruzioni di deploy deve verificare la documentazione aggiornata di fortrabbit e quella di Symfony.
 
@@ -96,7 +96,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Vedere e modificare le pizze di qualsiasi gruppo, in qualunque stato non archiviato.
 - Gruppi e link si gestiscono in ogni stato tranne «Archiviata». Il nome del gruppo è unico nella serata senza distinzione di maiuscole, accenti e spazi; al massimo 50 gruppi.
 - Messaggio WhatsApp precompilato: «Slice – {nome serata}: ecco il link per ordinare le pizze di {nome gruppo}: {link}».
-- Conferma esplicita prima di eliminare un gruppo (con il numero di pizze che verranno eliminate) e prima di rigenerare un link. La lista dei gruppi si aggiorna con polling ogni 5 secondi.
+- Conferma esplicita prima di eliminare un gruppo (con il numero di pizze che verranno eliminate) e prima di rigenerare un link. La lista dei gruppi si aggiorna con polling ogni 15 secondi.
 
 **Lista per il pizzaiolo**
 
@@ -104,7 +104,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Pulsante «Copia lista» in testo semplice (es. `3 x Margherita`).
 - Vista alternativa per gruppo, utile per la consegna ai tavoli.
 - Avviso se la stessa pizza ha prezzi diversi tra gruppi (possibile errore di inserimento), con l'elenco delle righe coinvolte.
-- Dettagli di implementazione: il testo copiato contiene solo le righe `quantità x nome` in ordine alfabetico (senza distinzione di maiuscole e accenti); il totale delle pizze è mostrato a schermo. Il nome mostrato è la forma digitata più frequente, a parità la più recente. La vista per gruppo riporta le quantità per pizza di ogni gruppo. L'avviso compare quando due pizze con lo stesso nome normalizzato hanno prezzi diversi in gruppi diversi (prezzi diversi nello stesso gruppo non generano avviso) ed elenca tutte le righe di quella pizza con gruppo, persona, nome digitato e prezzo. La lista si aggiorna con polling ogni 5 secondi.
+- Dettagli di implementazione: il testo copiato contiene solo le righe `quantità x nome` in ordine alfabetico (senza distinzione di maiuscole e accenti); il totale delle pizze è mostrato a schermo. Il nome mostrato è la forma digitata più frequente, a parità la più recente. La vista per gruppo riporta le quantità per pizza di ogni gruppo. L'avviso compare quando due pizze con lo stesso nome normalizzato hanno prezzi diversi in gruppi diversi (prezzi diversi nello stesso gruppo non generano avviso) ed elenca tutte le righe di quella pizza con gruppo, persona, nome digitato e prezzo. La lista si aggiorna con polling ogni 15 secondi.
 
 **Conto e sconto**
 
@@ -121,7 +121,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Totale da ricevere, totale già ricevuto, totale mancante.
 - Riga «Differenza da arrotondamento»: somma delle quote meno totale pagato, mostrata solo all'organizzatore (vedi la sezione sull'algoritmo).
 - Dettagli di implementazione del conto: il totale pagato va da 0,01 € a 50.000,00 € (virgola o punto, al massimo due decimali). L'anteprima si aggiorna mentre si digita e il pulsante «Conferma conto» (poi «Aggiorna conto») compare solo se il calcolo è possibile; con totale pagato maggiore del totale da listino serve la casella «Confermo l'importo». Lo sconto in percentuale ha due decimali (es. «10,45 %»); con maggiorazione si mostra «Maggiorazione applicata». Con conto inserito sono rifiutate le modifiche alle pizze che renderebbero impossibile il calcolo in modalità uguale (con la pizza coinvolta e il suggerimento della modalità proporzionale) e l'eliminazione dell'ultima pizza.
-- Rimborsi: l'interruttore registra data e ora (fuso Europe/Rome, impostato per tutta l'app); non compare per il gruppo dell'organizzatore né per i gruppi senza pizze, che mostrano «Nessun rimborso dovuto». Se il gruppo dell'organizzatore non è indicato, il riepilogo lo segnala e tutti i gruppi risultano da rimborsare. Riepilogo e pannello di stato si aggiornano subito dopo la conferma del conto e con polling ogni 5 secondi.
+- Rimborsi: l'interruttore registra data e ora (fuso Europe/Rome, impostato per tutta l'app); non compare per il gruppo dell'organizzatore né per i gruppi senza pizze, che mostrano «Nessun rimborso dovuto». Se il gruppo dell'organizzatore non è indicato, il riepilogo lo segnala e tutti i gruppi risultano da rimborsare. Riepilogo e pannello di stato si aggiornano subito dopo la conferma del conto e con polling ogni 15 secondi.
 
 ### Gruppo (`/g/{token_gruppo}`)
 
@@ -134,7 +134,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Con conto inserito: per ogni pizza prezzo di listino e prezzo scontato; totale per persona; totale da rimborsare all'organizzatore; sconto applicato in percentuale; note per il rimborso; stato «Rimborsato il …» oppure «Da rimborsare».
 - Il gruppo dell'organizzatore vede la propria quota con la dicitura «Nessun rimborso dovuto».
 - Un gruppo non vede le pizze, le quote né lo stato dei rimborsi degli altri gruppi.
-- Dettagli di implementazione: il prezzo accetta interi o al massimo due decimali, con virgola o punto ed eventuale simbolo «€» (es. «7», «7,5», «7.50 €»). Dopo l'inserimento il campo persona resta compilato per aggiungere più pizze alla stessa persona. I suggerimenti mostrano solo nomi e ultimo prezzo delle pizze della serata, mai nomi di persone o gruppi altrui; a parità di frequenza vince la forma digitata più recente. Al massimo 300 pizze per serata. Pagine e liste si aggiornano con polling ogni 5 secondi.
+- Dettagli di implementazione: il prezzo accetta interi o al massimo due decimali, con virgola o punto ed eventuale simbolo «€» (es. «7», «7,5», «7.50 €»). Dopo l'inserimento il campo persona resta compilato per aggiungere più pizze alla stessa persona. I suggerimenti mostrano solo nomi e ultimo prezzo delle pizze della serata, mai nomi di persone o gruppi altrui; a parità di frequenza vince la forma digitata più recente. Al massimo 300 pizze per serata. Pagine e liste si aggiornano con polling ogni 15 secondi.
 - L'organizzatore modifica le pizze di un gruppo dalla pagina `/s/{token_admin}/g/{token_gruppo}`, raggiungibile dal pulsante «Pizze» nella lista gruppi.
 
 ## Modello dati
@@ -241,13 +241,15 @@ Regole di implementazione:
 - Un token di gruppo non dà accesso a nessun dato degli altri gruppi né alle funzioni admin; ogni azione dei Live Components verifica lato server che la riga appartenga al gruppo del token.
 - Token non validi: pagina 404 generica.
 - Header `X-Robots-Tag: noindex` e meta `noindex` su tutte le pagine tranne la home.
-- Rate limiting sulle rotte con token e sulla creazione di serate (es. 10 serate all'ora per IP).
+- Job periodici (cancellazione delle serate scadute e backup giornaliero) avviati da `GET /_jobs/run/{segreto}`, con il segreto nella variabile `JOBS_SECRET` (almeno 32 caratteri, confronto a tempo costante, 404 se assente o errato). L'URL è idempotente (al massimo un backup al giorno) e va richiamato almeno una volta al giorno da un servizio di cron esterno o a mano. Il segreto finisce nei log di accesso: va trattato come una password e rigenerato se esposto. La risposta mostra anche l'IP del client visto dall'app, per verificare `TRUSTED_PROXIES`. Gli stessi job sono disponibili come comandi `app:evenings:purge` e `app:db:backup`.
+- Pagine di errore generiche in italiano (404 «Pagina non trovata», 429 «Troppe richieste»), senza dettagli tecnici.
+- Rate limiting per IP, con quattro limiti separati: creazione di serate 10 all'ora; apertura delle pagine `/s/…` e `/g/…` 300 ogni 5 minuti; aggiornamenti automatici e azioni dei Live Components 1.500 ogni 5 minuti; link con token inesistente 30 ogni 5 minuti, superati i quali l'IP è bloccato temporaneamente su tutte le rotte con token. Risposta 429 con pagina in italiano. Il limite più utile è quello sulla creazione: indovinare un token da 64 caratteri esadecimali è comunque impraticabile. Su fortrabbit l'IP reale dipende dalla variabile `TRUSTED_PROXIES`, da verificare con l'URL dei job.
 - Protezione CSRF e validazione lato server di tutti gli input.
-- Dati personali minimi (solo nomi di battesimo o soprannomi). Le serate vengono cancellate automaticamente 90 giorni dopo la data della serata, tramite un comando schedulato; il periodo è indicato nella home.
+- Dati personali minimi (solo nomi di battesimo o soprannomi). Le serate vengono cancellate automaticamente 90 giorni dopo la data della serata, tramite un job avviato dall'URL segreto (vedi sotto); il periodo è indicato nella home.
 
 **Altri requisiti**
 
-- Concorrenza: più membri dello stesso gruppo possono inserire pizze contemporaneamente; ogni pizza è una riga indipendente, quindi non servono lock. Le pagine si aggiornano con polling ogni 5 secondi.
+- Concorrenza: più membri dello stesso gruppo possono inserire pizze contemporaneamente; ogni pizza è una riga indipendente, quindi non servono lock. Le pagine si aggiornano con polling ogni 15 secondi.
 - Ogni azione che cambia lo stato della serata è controllata lato server (es. niente aggiunta di pizze a ordini chiusi, anche con richieste costruite a mano).
 - Tempo di risposta sotto 500 ms per le pagine principali con 300 pizze.
 
@@ -272,7 +274,7 @@ Criteri di accettazione:
 
 - [ ] Si crea una serata dalla home e si ottiene il link admin con avviso di salvataggio.
 - [ ] Si creano gruppi, se ne indica uno come proprio e si condividono i link (copia e WhatsApp).
-- [ ] Due membri dello stesso gruppo, da due telefoni, inseriscono pizze e vedono entro 5 secondi quelle dell'altro.
+- [ ] Due membri dello stesso gruppo, da due telefoni, inseriscono pizze e vedono entro 15 secondi quelle dell'altro.
 - [ ] Un link di gruppo non mostra mai pizze, quote o rimborsi di altri gruppi; un link rigenerato rende inutilizzabile il precedente.
 - [ ] La lista per il pizzaiolo aggrega «Margherita», «margherita» e « margherita » in una sola riga e si copia come testo.
 - [ ] Con ordini chiusi, i gruppi non possono aggiungere o modificare pizze, neanche con richieste costruite a mano.

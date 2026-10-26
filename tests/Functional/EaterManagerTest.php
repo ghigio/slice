@@ -33,7 +33,7 @@ final class EaterManagerTest extends WebTestCase
         $crawler = $this->component()->render()->crawler();
 
         self::assertStringContainsString('Nessun gruppo', $crawler->text());
-        self::assertStringContainsString('5000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
+        self::assertStringContainsString('15000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
     }
 
     public function testAggiungeUnGruppo(): void

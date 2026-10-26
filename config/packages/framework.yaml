@@ -1,6 +1,11 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
+    # Il noindex è gestito da App\EventSubscriber\NoIndexSubscriber (tutte le pagine tranne la home), in ogni ambiente.
+    disallow_search_engine_index: false
+    # Proxy davanti all'app (es. su fortrabbit): necessari per vedere l'IP reale dei client nei limiti per IP.
+    trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-host']
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true

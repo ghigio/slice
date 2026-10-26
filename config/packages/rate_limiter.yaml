@@ -1,0 +1,39 @@
+# Limiti per IP. Su fortrabbit l'IP reale dipende da TRUSTED_PROXIES (vedi README).
+framework:
+    cache:
+        pools:
+            rate_limiter.cache:
+                adapter: cache.app
+    rate_limiter:
+        # Creazione serate (requisiti: 10 all'ora per IP).
+        evening_creation:
+            policy: sliding_window
+            limit: 10
+            interval: '1 hour'
+            cache_pool: rate_limiter.cache
+        # Apertura delle pagine /s/... e /g/...
+        token_pages:
+            policy: sliding_window
+            limit: 300
+            interval: '5 minutes'
+            cache_pool: rate_limiter.cache
+        # Aggiornamenti automatici (ogni 15 s) e azioni dei Live Components.
+        live_components:
+            policy: sliding_window
+            limit: 1500
+            interval: '5 minutes'
+            cache_pool: rate_limiter.cache
+        # Link con token inesistente: superata la soglia, l'IP è bloccato su tutte le rotte con token.
+        unknown_tokens:
+            policy: sliding_window
+            limit: 30
+            interval: '5 minutes'
+            cache_pool: rate_limiter.cache
+
+when@test:
+    framework:
+        rate_limiter:
+            evening_creation: { policy: sliding_window, limit: 2, interval: '1 hour', cache_pool: rate_limiter.cache }
+            token_pages: { policy: sliding_window, limit: 5, interval: '5 minutes', cache_pool: rate_limiter.cache }
+            live_components: { policy: sliding_window, limit: 50, interval: '5 minutes', cache_pool: rate_limiter.cache }
+            unknown_tokens: { policy: sliding_window, limit: 2, interval: '5 minutes', cache_pool: rate_limiter.cache }

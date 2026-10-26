@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Errore · Slice{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Qualcosa è andato storto</h1>
+    <p>Riprova tra qualche istante. Se il problema continua, contatta chi ha organizzato la serata.</p>
+    <a href="{{ path('home') }}" class="btn btn-outline-primary">Vai alla home</a>
+{% endblock %}

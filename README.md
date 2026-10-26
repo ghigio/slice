@@ -38,6 +38,8 @@ I valori predefiniti sono in `.env`; le modifiche locali vanno in `.env.local` (
 | `APP_SECRET` | Stringa casuale segreta, obbligatoria in produzione |
 | `DATABASE_URL` | Connessione al database, vedi sotto |
 | `DEFAULT_URI` | URL pubblico dell'app, usato dai comandi console |
+| `JOBS_SECRET` | Segreto (almeno 32 caratteri) dell'URL `/_jobs/run/{segreto}` che avvia pulizia e backup |
+| `TRUSTED_PROXIES` | Proxy fidati davanti all'app, per vedere l'IP reale dei client nel rate limiting (vedi deploy) |
 
 `DATABASE_URL`, variante SQLite (predefinita):
 

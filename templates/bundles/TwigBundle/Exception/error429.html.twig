@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Troppe richieste · Slice{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Troppe richieste</h1>
+    <p>Hai fatto troppe richieste in poco tempo. Attendi qualche minuto e riprova.</p>
+    <a href="{{ path('home') }}" class="btn btn-outline-primary">Vai alla home</a>
+{% endblock %}

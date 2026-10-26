@@ -136,7 +136,7 @@ final class BillComponentsTest extends WebTestCase
         self::assertStringContainsString('0,00 €', $crawler->filter('[data-received]')->text());
         self::assertStringContainsString('16,57 €', $crawler->filter('[data-missing]')->text());
         self::assertStringContainsString('Nessuna differenza', $crawler->filter('[data-rounding-difference]')->text());
-        self::assertStringContainsString('5000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
+        self::assertStringContainsString('15000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
     }
 
     public function testSegnaRimborsoConDataEOra(): void

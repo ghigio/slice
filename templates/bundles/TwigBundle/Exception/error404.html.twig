@@ -1,0 +1,9 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pagina non trovata · Slice{% endblock %}
+
+{% block body %}
+    <h1 class="h3">Pagina non trovata</h1>
+    <p>Il link non è valido o non è più attivo. Se te l'ha mandato l'organizzatore, chiedigli il link aggiornato.</p>
+    <a href="{{ path('home') }}" class="btn btn-outline-primary">Vai alla home</a>
+{% endblock %}

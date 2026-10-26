@@ -44,7 +44,7 @@ final class PizzaOrderTest extends WebTestCase
         self::assertStringContainsString('13,50 €', $this->personBlock($crawler, 'Anna')->filter('[data-person-total]')->text());
         self::assertStringContainsString('8,00 €', $this->personBlock($crawler, 'Luca')->filter('[data-person-total]')->text());
         self::assertStringContainsString('21,50 €', $crawler->filter('[data-eater-total]')->text());
-        self::assertStringContainsString('5000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
+        self::assertStringContainsString('15000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
     }
 
     public function testAggiungeUnaPizzaEMantieneLaPersona(): void

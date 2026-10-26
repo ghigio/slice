@@ -39,7 +39,7 @@ final class PizzaListComponentTest extends WebTestCase
         self::assertStringContainsString('4 pizze', $crawler->filter('[data-pizza-total]')->text());
         self::assertSame("1 x Diavola\n3 x margherita", $crawler->filter('textarea[readonly]')->text(null, false));
         self::assertSame('Copia lista', $crawler->filter('button:contains("Copia lista")')->text());
-        self::assertStringContainsString('5000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
+        self::assertStringContainsString('15000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
     }
 
     public function testAvvisoPrezziDiversi(): void
