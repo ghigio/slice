@@ -72,6 +72,7 @@ I rimborsi si possono segnare solo negli stati «Conto inserito» e «Archiviata
 - Pagina iniziale con una breve spiegazione e il pulsante «Crea una serata».
 - Creazione: nome della serata (es. «Pizza da Gino»), data, nome della pizzeria (facoltativo), nome dell'organizzatore, note per il rimborso (facoltative, es. IBAN o numero Satispay, mostrate ai gruppi).
 - Dopo la creazione l'organizzatore viene portato alla pagina admin, con un avviso ben visibile: «Salva questo link, è l'unico modo per gestire la serata» e un pulsante per copiarlo.
+- Rotte: home `/`, creazione `/nuova-serata`. La data è precompilata con il giorno corrente; le note per il rimborso hanno al massimo 1000 caratteri. L'avviso compare subito dopo la creazione, mentre il link admin con il pulsante di copia resta sempre visibile in testa alla pagina admin.
 
 ### Organizzatore (`/s/{token_admin}`)
 

@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ evening.name }} · Slice{% endblock %}
+
+{% block body %}
+    {% set admin_url = url('evening_admin', {adminToken: evening.adminToken}) %}
+
+    {% if app.flashes('evening_created') is not empty %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Salva questo link, è l'unico modo per gestire la serata.</strong>
+            Non ci sono account: chi perde il link non può più gestire la serata.
+        </div>
+    {% endif %}
+
+    <header class="mb-4">
+        <h1 class="h3 mb-1">{{ evening.name }}</h1>
+        <p class="text-body-secondary mb-0">
+            {{ evening.date|date }}{% if evening.pizzeria %} · {{ evening.pizzeria }}{% endif %} · organizza {{ evening.organizerName }}
+        </p>
+    </header>
+
+    <section {{ stimulus_controller('clipboard') }}>
+        <label for="admin-link" class="form-label fw-semibold">Link per gestire la serata</label>
+        <div class="input-group">
+            <input id="admin-link" type="text" class="form-control" value="{{ admin_url }}" readonly {{ stimulus_target('clipboard', 'source') }}>
+            <button type="button" class="btn btn-outline-primary" {{ stimulus_action('clipboard', 'copy') }}>Copia link</button>
+        </div>
+        <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
+    </section>
+{% endblock %}
