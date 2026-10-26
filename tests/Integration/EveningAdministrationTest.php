@@ -215,6 +215,60 @@ final class EveningAdministrationTest extends KernelTestCase
         self::assertSame(EveningStatus::BillEntered, $this->evening->getStatus());
     }
 
+    public function testDallInvitoCiSiAggiungeSoloConOrdiniAperti(): void
+    {
+        $eater = $this->admin->addEaterFromInvite($this->evening, '  Famiglia   Rossi ');
+        self::assertNotNull($eater->getId());
+        self::assertSame('Famiglia Rossi', $eater->getName());
+
+        foreach ([EveningStatus::OrdersClosed, EveningStatus::BillEntered, EveningStatus::Archived] as $status) {
+            $this->evening->setStatus($status);
+            try {
+                $this->admin->addEaterFromInvite($this->evening, 'Famiglia '.$status->value);
+                self::fail('Attesa EveningRuleException per '.$status->value);
+            } catch (EveningRuleException $e) {
+                self::assertSame('Non è più possibile aggiungere gruppi: gli ordini sono chiusi.', $e->getMessage());
+            }
+        }
+        self::assertCount(1, $this->evening->getEaters());
+    }
+
+    public function testDallInvitoValgonoLeStesseRegoleSulNome(): void
+    {
+        $this->admin->addEaterFromInvite($this->evening, 'Famiglia Rossi');
+
+        $this->expectExceptionObject(new EveningRuleException('Esiste già un gruppo con questo nome.'));
+        $this->admin->addEaterFromInvite($this->evening, 'famiglia rossi');
+    }
+
+    public function testDallInvitoValeIlLimiteDiCinquantaGruppi(): void
+    {
+        for ($i = 1; $i <= 50; ++$i) {
+            $this->admin->addEaterFromInvite($this->evening, 'Gruppo '.$i);
+        }
+
+        $this->expectExceptionObject(new EveningRuleException('Una serata può avere al massimo 50 gruppi.'));
+        $this->admin->addEaterFromInvite($this->evening, 'Gruppo 51');
+    }
+
+    public function testRigeneraIlLinkDInvito(): void
+    {
+        $old = $this->evening->getInviteToken();
+
+        $this->admin->regenerateInviteToken($this->evening);
+        $this->em->clear();
+
+        self::assertNotSame($old, $this->reload()->getInviteToken());
+    }
+
+    public function testLinkDInvitoNonRigenerabileDaArchiviata(): void
+    {
+        $this->evening->setStatus(EveningStatus::Archived);
+
+        $this->expectExceptionObject(new EveningRuleException('La serata è archiviata: riaprila per modificarla.'));
+        $this->admin->regenerateInviteToken($this->evening);
+    }
+
     private function persistEvening(string $name): Evening
     {
         $evening = new Evening($name, new \DateTimeImmutable('2026-10-19'), 'Org');

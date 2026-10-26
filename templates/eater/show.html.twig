@@ -10,5 +10,20 @@
         </p>
         <p class="fs-5 fw-semibold mb-0">{{ eater.name }}</p>
     </header>
+    {% if app.flashes('eater_created') is not empty %}
+        {% set eater_url = url('eater_show', {token: eater.token}) %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Salva questo link: è l'unico modo per tornare alle pizze del tuo gruppo.</strong>
+            Giralo anche agli altri membri del gruppo.
+            <div class="mt-2" {{ stimulus_controller('clipboard') }}>
+                <label for="eater-link" class="visually-hidden">Link del gruppo</label>
+                <div class="input-group">
+                    <input id="eater-link" type="text" class="form-control" value="{{ eater_url }}" readonly {{ stimulus_target('clipboard', 'source') }}>
+                    <button type="button" class="btn btn-outline-primary" {{ stimulus_action('clipboard', 'copy') }}>Copia link</button>
+                </div>
+                <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
+            </div>
+        </div>
+    {% endif %}
     <twig:PizzaOrder eater="{{ eater }}" />
 {% endblock %}

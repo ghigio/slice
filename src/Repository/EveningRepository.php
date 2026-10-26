@@ -20,4 +20,9 @@ class EveningRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['adminToken' => $adminToken]);
     }
+
+    public function findOneByInviteToken(string $inviteToken): ?Evening
+    {
+        return $this->findOneBy(['inviteToken' => $inviteToken]);
+    }
 }

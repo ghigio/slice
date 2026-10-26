@@ -11,11 +11,11 @@ use Symfony\Component\RateLimiter\RateLimit;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
- * Limiti per IP: creazione serate, pagine con token, Live Components e tentativi con token inesistenti.
+ * Limiti per IP: creazione serate, pagine con token (/s, /g, /i), Live Components e tentativi con token inesistenti.
  */
 final class RateLimitSubscriber
 {
-    private const string TOKEN_PATHS = '#^/(s|g|_jobs)/#';
+    private const string TOKEN_PATHS = '#^/(s|g|i|_jobs)/#';
 
     public function __construct(
         private readonly RateLimiterFactoryInterface $eveningCreationLimiter,

@@ -4,6 +4,7 @@ namespace App\Evening;
 
 use App\Entity\Eater;
 use App\Entity\Evening;
+use App\Enum\EveningStatus;
 use App\Evening\Exception\EveningRuleException;
 use App\Text\NameNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,6 +35,23 @@ final class EveningAdministration
         $this->em->flush();
 
         return $eater;
+    }
+
+    /** Aggiunta di un gruppo dal link d'invito: consentita solo con ordini aperti. */
+    public function addEaterFromInvite(Evening $evening, string $name): Eater
+    {
+        if (EveningStatus::OrdersOpen !== $evening->getStatus()) {
+            throw new EveningRuleException('Non è più possibile aggiungere gruppi: gli ordini sono chiusi.');
+        }
+
+        return $this->addEater($evening, $name);
+    }
+
+    public function regenerateInviteToken(Evening $evening): void
+    {
+        $this->assertEditable($evening);
+        $evening->regenerateInviteToken();
+        $this->em->flush();
     }
 
     public function renameEater(Evening $evening, int $eaterId, string $name): void

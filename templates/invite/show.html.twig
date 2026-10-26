@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ evening.name }} · Slice{% endblock %}
+
+{% block body %}
+    <header class="mb-4">
+        <h1 class="h3 mb-1">{{ evening.name }}</h1>
+        <p class="text-body-secondary mb-0">
+            {{ evening.date|date }}{% if evening.pizzeria %} · {{ evening.pizzeria }}{% endif %} · organizza {{ evening.organizerName }}
+        </p>
+    </header>
+
+    <section class="mb-4">
+        <h2 class="h5">Gruppi già aggiunti</h2>
+        {% if eaters is empty %}
+            <p class="text-body-secondary">Ancora nessun gruppo: sii il primo.</p>
+        {% else %}
+            <ul class="list-unstyled mb-0">
+                {% for name in eaters %}<li class="py-1 border-bottom" data-invite-eater>{{ name }}</li>{% endfor %}
+            </ul>
+            <p class="form-text">Se il tuo gruppo è già in elenco, chiedi il link a chi l'ha aggiunto.</p>
+        {% endif %}
+    </section>
+
+    {% if can_join %}
+        <section>
+            <h2 class="h5">Aggiungi il tuo gruppo</h2>
+            {{ form(form) }}
+        </section>
+    {% else %}
+        <div class="alert alert-secondary" role="status">Non è più possibile aggiungere gruppi: gli ordini sono chiusi.</div>
+    {% endif %}
+{% endblock %}

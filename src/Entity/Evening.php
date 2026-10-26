@@ -32,6 +32,10 @@ class Evening
     #[ORM\Column(length: 64, unique: true)]
     private string $adminToken;
 
+    /** Link d'invito con cui i gruppi si aggiungono da soli; nullable solo per migrare le serate esistenti. */
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
+    private ?string $inviteToken = null;
+
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -74,6 +78,7 @@ class Evening
     public function __construct(string $name, \DateTimeImmutable $date, string $organizerName, ?string $pizzeria = null, ?string $refundNotes = null)
     {
         $this->adminToken = TokenGenerator::generate();
+        $this->inviteToken = TokenGenerator::generate();
         $this->eaters = new ArrayCollection();
         $this->setName($name);
         $this->setDate($date);
@@ -90,6 +95,17 @@ class Evening
     public function getAdminToken(): string
     {
         return $this->adminToken;
+    }
+
+    public function getInviteToken(): string
+    {
+        return $this->inviteToken;
+    }
+
+    /** Il link d'invito precedente smette di funzionare; gruppi e loro link restano validi. */
+    public function regenerateInviteToken(): void
+    {
+        $this->inviteToken = TokenGenerator::generate();
     }
 
     public function getName(): string

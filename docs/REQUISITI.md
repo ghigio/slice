@@ -41,6 +41,8 @@ Verifiche da fare su fortrabbit prima di adottare SQLite (se una fallisce si usa
 | Ambiente locale | Lando, servizio unico PHP 8.4 + Apache, nessun database server |
 | Deploy | Push sul repository GitHub `slice`, collegato a fortrabbit tramite GitHub App; impostazioni versionate in `.fortrabbit/deploy.yml` (comandi di build, migrazioni Doctrine dopo il deploy, esclusione di `/var/data` e `/var/backups`) |
 
+Le migrazioni su SQLite vanno scritte senza ricreare tabelle con `DROP TABLE` (come fa a volte `doctrine:migrations:diff`): con `foreign_keys=ON` cancellerebbero a cascata gruppi e pizze. Il test `MigrationsPreserveDataTest` lo verifica.
+
 Con SQLite serve un backup giornaliero (comando `app:db:backup`, avviato anche dall'URL segreto dei job): crea una copia coerente del database con `VACUUM INTO` in `var/backups/` e conserva le ultime 7 copie. Con MySQL il comando non serve.
 
 Claude Code deve includere un file `README.md` con le istruzioni di installazione locale, la configurazione delle variabili d'ambiente (incluse le due varianti di `DATABASE_URL`), i passi di deploy su fortrabbit (GitHub App e deploy file), il collegamento del dominio personalizzato e come scaricare i backup. Prima di scrivere le istruzioni di deploy deve verificare la documentazione aggiornata di fortrabbit e quella di Symfony.
@@ -53,6 +55,7 @@ Ci sono due ruoli, ciascuno identificato solo da un link segreto: l'organizzator
 | --- | --- | --- |
 | `/s/{token_admin}` | Organizzatore | Gestire la serata: gruppi, stato, conto, sconto, rimborsi, riepiloghi |
 | `/g/{token_gruppo}` | Tutti i membri di una famiglia | Inserire e modificare le pizze della propria famiglia, vedere il proprio riepilogo e lo stato del rimborso |
+| `/i/{token_invito}` | Tutte le famiglie (chat comune) | Vedere i nomi dei gruppi già aggiunti e aggiungere il proprio gruppo, solo con ordini aperti |
 
 Un gruppo può essere composto anche da una sola persona. L'organizzatore appartiene a uno dei gruppi, che viene marcato come «gruppo dell'organizzatore» e non deve rimborsare nulla.
 
@@ -92,6 +95,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 
 - Aggiungere, rinominare ed eliminare gruppi (nome, es. «Famiglia Rossi»). Un gruppo con pizze si può eliminare solo dopo conferma.
 - Indicare quale gruppo è il proprio.
+- Link d'invito, generato alla creazione della serata e mostrato nella pagina admin con «Copia link», «Condividi su WhatsApp» (messaggio «Slice – {nome serata}: aggiungi il tuo gruppo e ordina le pizze qui: {link}») e «Rigenera link» (il vecchio smette di funzionare; gruppi e loro link restano validi; non disponibile da serata archiviata). Così l'organizzatore non deve creare i gruppi in anticipo, ma può continuare a farlo.
 - Per ogni gruppo: copiare il link, condividerlo su WhatsApp (link `https://wa.me/?text=...` con messaggio precompilato) e rigenerarlo (il vecchio link smette di funzionare).
 - Vedere e modificare le pizze di qualsiasi gruppo, in qualunque stato non archiviato.
 - Gruppi e link si gestiscono in ogni stato tranne «Archiviata». Il nome del gruppo è unico nella serata senza distinzione di maiuscole, accenti e spazi; al massimo 50 gruppi.
@@ -123,6 +127,13 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Dettagli di implementazione del conto: il totale pagato va da 0,01 € a 50.000,00 € (virgola o punto, al massimo due decimali). L'anteprima si aggiorna mentre si digita e il pulsante «Conferma conto» (poi «Aggiorna conto») compare solo se il calcolo è possibile; con totale pagato maggiore del totale da listino serve la casella «Confermo l'importo». Lo sconto in percentuale ha due decimali (es. «10,45 %»); con maggiorazione si mostra «Maggiorazione applicata». Con conto inserito sono rifiutate le modifiche alle pizze che renderebbero impossibile il calcolo in modalità uguale (con la pizza coinvolta e il suggerimento della modalità proporzionale) e l'eliminazione dell'ultima pizza.
 - Rimborsi: l'interruttore registra data e ora (fuso Europe/Rome, impostato per tutta l'app); non compare per il gruppo dell'organizzatore né per i gruppi senza pizze, che mostrano «Nessun rimborso dovuto». Se il gruppo dell'organizzatore non è indicato, il riepilogo lo segnala e tutti i gruppi risultano da rimborsare. Riepilogo e pannello di stato si aggiornano subito dopo la conferma del conto e con polling ogni 15 secondi.
 
+### Invito (`/i/{token_invito}`)
+
+- Intestazione con nome della serata, data, pizzeria e organizzatore; elenco dei **soli nomi** dei gruppi già aggiunti, senza link alle loro pagine né altri dati.
+- Con ordini aperti: campo «Nome del gruppo» e pulsante «Aggiungi il mio gruppo». Valgono le regole dei gruppi creati dall'organizzatore (nome obbligatorio e unico senza distinzione di maiuscole, accenti e spazi; massimo 50 gruppi). Dopo l'aggiunta si viene reindirizzati alla pagina del nuovo gruppo, che mostra l'avviso «Salva questo link: è l'unico modo per tornare alle pizze del tuo gruppo» con il pulsante «Copia link».
+- Negli altri stati: elenco dei nomi e messaggio «Non è più possibile aggiungere gruppi: gli ordini sono chiusi.»; anche le richieste costruite a mano vengono rifiutate.
+- Token non valido o rigenerato: 404 generico; la rotta rientra nel rate limiting delle rotte con token.
+
 ### Gruppo (`/g/{token_gruppo}`)
 
 - Intestazione con nome della serata, pizzeria, data e nome del gruppo.
@@ -151,6 +162,7 @@ Nel codice e nello schema i nomi sono in inglese; i testi dell'interfaccia resta
 | --- | --- | --- |
 | id | bigint | Chiave primaria |
 | admin\_token | string(64), unico | Generato in modo casuale e sicuro |
+| invite\_token | string(64), unico | Link d'invito, generato in modo casuale e sicuro; rigenerabile. Nullable nello schema solo per migrare le serate esistenti |
 | name | string | Obbligatorio |
 | date | date | Obbligatoria |
 | pizzeria | string, nullable |  |

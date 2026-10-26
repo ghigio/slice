@@ -28,6 +28,8 @@
         <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
     </section>
 
+    <twig:InviteLink evening="{{ evening }}" />
+
     <hr class="my-4">
     <twig:EveningStatusPanel evening="{{ evening }}" />
     <twig:BillSummaryTable evening="{{ evening }}" />

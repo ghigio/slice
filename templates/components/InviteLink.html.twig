@@ -1,0 +1,20 @@
+<section {{ attributes }} class="mt-4">
+    <label for="invite-link-{{ evening.id }}" class="form-label fw-semibold">Link d'invito per i gruppi</label>
+    <p class="form-text mt-0">Mandalo nella chat di tutte le famiglie: ognuna aggiunge il proprio gruppo e ordina.</p>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+    <div {{ stimulus_controller('clipboard') }} class="mb-2">
+        <div class="input-group">
+            <input id="invite-link-{{ evening.id }}" type="text" class="form-control" value="{{ this.inviteUrl }}" readonly {{ stimulus_target('clipboard', 'source') }}>
+            <button type="button" class="btn btn-outline-primary" {{ stimulus_action('clipboard', 'copy') }}>Copia link</button>
+        </div>
+        <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
+    </div>
+    <div class="d-flex flex-wrap gap-2" {{ stimulus_controller('confirm') }}>
+        <a class="btn btn-success" href="{{ this.whatsappUrl }}" target="_blank" rel="noopener">Condividi su WhatsApp</a>
+        {% if evening.canManageEaters %}
+            <button type="button" class="btn btn-outline-secondary" data-action="confirm#ask live#action" data-live-action-param="regenerate"
+                    data-confirm-message-param="Creare un nuovo link d'invito? Quello attuale smetterà di funzionare; i gruppi già aggiunti non cambiano.">Rigenera link</button>
+        {% endif %}
+    </div>
+</section>
