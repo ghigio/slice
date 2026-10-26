@@ -65,6 +65,18 @@ Stati della serata, in ordine:
 
 I rimborsi si possono segnare solo negli stati «Conto inserito» e «Archiviata».
 
+Transizioni ammesse (tutte verificate lato server):
+
+| Da | A | Azione |
+| --- | --- | --- |
+| Ordini aperti | Ordini chiusi | «Chiudi ordini», con conferma |
+| Ordini chiusi | Ordini aperti | «Riapri ordini» |
+| Ordini chiusi | Conto inserito | Inserimento del conto (il conto non si può inserire con ordini aperti) |
+| Conto inserito | Archiviata | «Archivia», con conferma |
+| Archiviata | Conto inserito | «Riapri» |
+
+Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per una pizza dimenticata l'organizzatore modifica direttamente le pizze del gruppo e le quote si ricalcolano.
+
 ## Funzionalità
 
 ### Home
@@ -82,6 +94,9 @@ I rimborsi si possono segnare solo negli stati «Conto inserito» e «Archiviata
 - Indicare quale gruppo è il proprio.
 - Per ogni gruppo: copiare il link, condividerlo su WhatsApp (link `https://wa.me/?text=...` con messaggio precompilato) e rigenerarlo (il vecchio link smette di funzionare).
 - Vedere e modificare le pizze di qualsiasi gruppo, in qualunque stato non archiviato.
+- Gruppi e link si gestiscono in ogni stato tranne «Archiviata». Il nome del gruppo è unico nella serata senza distinzione di maiuscole, accenti e spazi; al massimo 50 gruppi.
+- Messaggio WhatsApp precompilato: «Slice – {nome serata}: ecco il link per ordinare le pizze di {nome gruppo}: {link}».
+- Conferma esplicita prima di eliminare un gruppo (con il numero di pizze che verranno eliminate) e prima di rigenerare un link. La lista dei gruppi si aggiorna con polling ogni 5 secondi.
 
 **Lista per il pizzaiolo**
 

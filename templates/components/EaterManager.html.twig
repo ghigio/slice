@@ -1,0 +1,79 @@
+<section {{ attributes }} data-poll="delay(5000)|$render" class="mb-4">
+    <h2 class="h5">Gruppi</h2>
+    {% set editable = evening.canManageEaters %}
+
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    {% if editable %}
+        <form class="mb-3" data-action="live#action:prevent" data-live-action-param="add">
+            <label for="new-eater-name" class="form-label">Nuovo gruppo</label>
+            <div class="input-group">
+                <input id="new-eater-name" type="text" class="form-control form-control-lg" maxlength="255"
+                       placeholder="Famiglia Rossi" data-model="norender|newName" value="{{ newName }}">
+                <button type="submit" class="btn btn-primary">Aggiungi</button>
+            </div>
+        </form>
+    {% else %}
+        <p class="text-body-secondary">Serata archiviata: sola lettura.</p>
+    {% endif %}
+
+    {% if evening.eaters is empty %}
+        <p class="text-body-secondary">Nessun gruppo: aggiungi le famiglie che ordinano.</p>
+    {% endif %}
+
+    <ul class="list-unstyled mb-0" {{ stimulus_controller('confirm') }}>
+        {% for eater in evening.eaters %}
+            {% set pizza_count = eater.pizzas|length %}
+            {% set is_organizer = evening.organizerEater is not null and evening.organizerEater.id == eater.id %}
+            <li class="card mb-3" data-eater-row id="eater-{{ eater.id }}">
+                <div class="card-body">
+                    {% if editable and editingId == eater.id %}
+                        <form class="mb-2" data-action="live#action:prevent" data-live-action-param="rename">
+                            <label for="rename-{{ eater.id }}" class="form-label">Nuovo nome</label>
+                            <input id="rename-{{ eater.id }}" type="text" class="form-control mb-2" maxlength="255"
+                                   data-model="norender|editingName" value="{{ editingName }}">
+                            <button type="submit" class="btn btn-primary">Salva</button>
+                            <button type="button" class="btn btn-link" data-action="live#action" data-live-action-param="cancelEdit">Annulla</button>
+                        </form>
+                    {% endif %}
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <strong data-eater-name>{{ eater.name }}</strong>
+                        {% if is_organizer %}<span class="badge text-bg-primary">Il tuo gruppo</span>{% endif %}
+                        <span class="text-body-secondary small">{{ pizza_count }} {{ pizza_count == 1 ? 'pizza' : 'pizze' }}</span>
+                    </div>
+
+                    <div {{ stimulus_controller('clipboard') }} class="mb-2">
+                        <label for="link-{{ eater.id }}" class="visually-hidden">Link del gruppo {{ eater.name }}</label>
+                        <div class="input-group">
+                            <input id="link-{{ eater.id }}" type="text" class="form-control" readonly value="{{ this.eaterUrl(eater) }}" {{ stimulus_target('clipboard', 'source') }}>
+                            <button type="button" class="btn btn-outline-primary" {{ stimulus_action('clipboard', 'copy') }}>Copia link</button>
+                        </div>
+                        <div class="form-text" aria-live="polite" {{ stimulus_target('clipboard', 'feedback') }}></div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-success" href="{{ this.whatsappUrl(eater) }}" target="_blank" rel="noopener">Condividi su WhatsApp</a>
+                        {% if editable %}
+                            <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                    data-live-action-param="startEdit" data-live-eater-id-param="{{ eater.id }}">Rinomina</button>
+                            {% if is_organizer %}
+                                <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                        data-live-action-param="setOrganizer">Non è il mio gruppo</button>
+                            {% else %}
+                                <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                        data-live-action-param="setOrganizer" data-live-eater-id-param="{{ eater.id }}">È il mio gruppo</button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-secondary" data-action="confirm#ask live#action"
+                                    data-live-action-param="regenerate" data-live-eater-id-param="{{ eater.id }}"
+                                    data-confirm-message-param="Creare un nuovo link per {{ eater.name }}? Il link attuale smetterà di funzionare.">Rigenera link</button>
+                            <button type="button" class="btn btn-outline-danger" data-action="confirm#ask live#action"
+                                    data-live-action-param="delete" data-live-eater-id-param="{{ eater.id }}" data-live-confirmed-param="true"
+                                    data-confirm-message-param="Eliminare il gruppo {{ eater.name }}{% if pizza_count > 0 %} e le sue {{ pizza_count }} {{ pizza_count == 1 ? 'pizza' : 'pizze' }}{% endif %}?">Elimina</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</section>

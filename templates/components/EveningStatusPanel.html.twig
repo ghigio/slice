@@ -1,0 +1,24 @@
+<section {{ attributes }} class="mb-4">
+    <div {{ stimulus_controller('confirm') }} class="d-flex flex-wrap align-items-center gap-2">
+        <span class="badge text-bg-secondary fs-6">{{ evening.status.label }}</span>
+        {% set status = evening.status.value %}
+        {% if status == 'orders_open' %}
+            <button type="button" class="btn btn-warning btn-lg"
+                    data-action="confirm#ask live#action" data-live-action-param="closeOrders"
+                    data-confirm-message-param="Chiudere gli ordini? I gruppi non potranno più modificare le pizze.">Chiudi ordini</button>
+        {% elseif status == 'orders_closed' %}
+            <button type="button" class="btn btn-outline-secondary btn-lg" data-action="live#action" data-live-action-param="reopenOrders">Riapri ordini</button>
+        {% elseif status == 'bill_entered' %}
+            <button type="button" class="btn btn-outline-secondary btn-lg"
+                    data-action="confirm#ask live#action" data-live-action-param="archive"
+                    data-confirm-message-param="Archiviare la serata? Resterà in sola lettura, salvo i rimborsi.">Archivia</button>
+        {% elseif status == 'archived' %}
+            <button type="button" class="btn btn-outline-secondary btn-lg" data-action="live#action" data-live-action-param="unarchive">Riapri</button>
+        {% endif %}
+    </div>
+    {% if status == 'orders_closed' %}
+        <p class="form-text mb-0">Dopo aver pagato, inserisci il conto per calcolare le quote.</p>
+    {% endif %}
+    {% if error %}<div class="alert alert-danger mt-2 mb-0" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success mt-2 mb-0" role="status">{{ notice }}</div>{% endif %}
+</section>

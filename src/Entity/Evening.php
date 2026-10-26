@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Enum\DiscountMode;
 use App\Enum\EveningStatus;
+use App\Evening\Exception\InvalidTransitionException;
 use App\Repository\EveningRepository;
 use App\Security\TokenGenerator;
 use App\Text\NameNormalizer;
@@ -153,6 +154,49 @@ class Evening
         $this->status = $status;
     }
 
+    /** Ordini aperti → Ordini chiusi: i gruppi non possono più modificare le pizze. */
+    public function closeOrders(): void
+    {
+        $this->transition(EveningStatus::OrdersOpen, EveningStatus::OrdersClosed);
+    }
+
+    /** Ordini chiusi → Ordini aperti. */
+    public function reopenOrders(): void
+    {
+        $this->transition(EveningStatus::OrdersClosed, EveningStatus::OrdersOpen);
+    }
+
+    /** Conto inserito → Archiviata: tutto in sola lettura, salvo i rimborsi. */
+    public function archive(): void
+    {
+        $this->transition(EveningStatus::BillEntered, EveningStatus::Archived);
+    }
+
+    /** Archiviata → Conto inserito («Riapri»). */
+    public function unarchive(): void
+    {
+        $this->transition(EveningStatus::Archived, EveningStatus::BillEntered);
+    }
+
+    public function isArchived(): bool
+    {
+        return EveningStatus::Archived === $this->status;
+    }
+
+    /** Gruppi, link e pizze si gestiscono in ogni stato tranne Archiviata. */
+    public function canManageEaters(): bool
+    {
+        return !$this->isArchived();
+    }
+
+    private function transition(EveningStatus $from, EveningStatus $to): void
+    {
+        if ($from !== $this->status) {
+            throw new InvalidTransitionException($this->status);
+        }
+        $this->status = $to;
+    }
+
     public function getPaidTotalCents(): ?int
     {
         return $this->paidTotalCents;
@@ -187,6 +231,14 @@ class Evening
     public function getEaters(): Collection
     {
         return $this->eaters;
+    }
+
+    public function removeEater(Eater $eater): void
+    {
+        $this->eaters->removeElement($eater);
+        if ($this->organizerEater === $eater) {
+            $this->organizerEater = null;
+        }
     }
 
     /** @internal Chiamato dal costruttore di Eater. */

@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ eater.name }} · {{ evening.name }} · Slice{% endblock %}
+
+{% block body %}
+    <header class="mb-4">
+        <h1 class="h3 mb-1">{{ evening.name }}</h1>
+        <p class="text-body-secondary mb-0">
+            {{ evening.date|date }}{% if evening.pizzeria %} · {{ evening.pizzeria }}{% endif %} · {{ eater.name }}
+        </p>
+    </header>
+    {# Inserimento delle pizze: fase 6. #}
+{% endblock %}
