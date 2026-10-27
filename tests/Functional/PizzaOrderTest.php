@@ -38,7 +38,7 @@ final class PizzaOrderTest extends WebTestCase
         $this->pizza($this->rossi, 'Anna', 'Margherita', 700);
         $this->pizza($this->rossi, 'Anna', 'Marinara', 650);
 
-        $crawler = $this->component()->render()->crawler();
+        $crawler = $this->component(asOrganizer: true)->render()->crawler();
 
         self::assertSame(['Anna', 'Luca'], $crawler->filter('[data-person-name]')->each(fn (Crawler $n) => $n->text()));
         self::assertStringContainsString('13,50 €', $this->personBlock($crawler, 'Anna')->filter('[data-person-total]')->text());
@@ -47,23 +47,36 @@ final class PizzaOrderTest extends WebTestCase
         self::assertStringContainsString('15000', (string) $crawler->filter('[data-poll]')->attr('data-poll'));
     }
 
+    public function testIlGruppoNonVedePrezziNeTotaliPrimaDelConto(): void
+    {
+        $this->pizza($this->rossi, 'Anna', 'Margherita', 700);
+        $this->pizza($this->rossi, 'Anna', 'Diavola', null);
+
+        $crawler = $this->component()->render()->crawler();
+
+        self::assertCount(0, $crawler->filter('input[data-model$="price"], input[data-model$="Price"]'));
+        self::assertCount(0, $crawler->filter('[data-pizza-price-prices-value]'));
+        self::assertCount(0, $crawler->filter('[data-person-total], [data-eater-total]'));
+        self::assertStringNotContainsString('€', $crawler->text());
+        self::assertStringNotContainsString('Prezzo da definire', $crawler->text());
+        self::assertStringContainsString('2 pizze', $this->personBlock($crawler, 'Anna')->text());
+    }
+
     public function testAggiungeUnaPizzaEMantieneLaPersona(): void
     {
         $component = $this->component();
-        $component->set('person', 'Anna')->set('pizzaName', ' margherita ')->set('price', '7,5')->call('add');
+        $component->set('person', 'Anna')->set('pizzaName', ' margherita ')->call('add');
         $crawler = $component->render()->crawler();
 
         self::assertStringContainsString('margherita', $this->personBlock($crawler, 'Anna')->text());
-        self::assertStringContainsString('7,50 €', $this->personBlock($crawler, 'Anna')->text());
         self::assertSame('Anna', $component->component()->person);
         self::assertSame('', $component->component()->pizzaName);
-        self::assertSame('', $component->component()->price);
         self::assertCount(1, $this->em->getRepository(Pizza::class)->findBy(['eater' => $this->rossi]));
     }
 
     public function testErroreDiValidazioneMantieneIDati(): void
     {
-        $component = $this->component();
+        $component = $this->component(asOrganizer: true);
         $crawler = $component->set('person', 'Anna')->set('pizzaName', 'Margherita')->set('price', 'tanto')->call('add')->render()->crawler();
 
         self::assertStringContainsString('Inserisci un prezzo valido, per esempio 7,50.', $crawler->filter('.alert-danger')->text());
@@ -100,7 +113,7 @@ final class PizzaOrderTest extends WebTestCase
     public function testModificaEdEliminazione(): void
     {
         $pizza = $this->pizza($this->rossi, 'Anna', 'Margherita', 700);
-        $component = $this->component();
+        $component = $this->component(asOrganizer: true);
 
         $component->call('startEdit', ['pizzaId' => $pizza->getId()]);
         self::assertSame('7,00', $component->component()->editPrice);
@@ -129,11 +142,31 @@ final class PizzaOrderTest extends WebTestCase
         $personOptions = $crawler->filter('datalist[data-person-suggestions] option')->each(fn (Crawler $o) => $o->attr('value'));
         self::assertSame(['Anna'], $personOptions);
 
-        $prices = json_decode((string) $crawler->filter('[data-pizza-price-prices-value]')->attr('data-pizza-price-prices-value'), true);
-        self::assertSame(['capricciosa' => '9,00', 'margherita' => '7,00'], $prices);
-
         self::assertStringNotContainsString('Marta', $crawler->html());
         self::assertStringNotContainsString('Famiglia Bianchi', $crawler->html());
+    }
+
+    public function testLOrganizzatoreRiceveIlPrezzoSuggerito(): void
+    {
+        $this->pizza($this->rossi, 'Anna', 'Margherita', 700);
+        $this->pizza($this->bianchi, 'Marta', 'Capricciosa', 900);
+
+        $crawler = $this->component(asOrganizer: true)->render()->crawler();
+
+        $prices = json_decode((string) $crawler->filter('[data-pizza-price-prices-value]')->attr('data-pizza-price-prices-value'), true);
+        self::assertSame(['capricciosa' => '9,00', 'margherita' => '7,00'], $prices);
+    }
+
+    public function testIlGruppoModificaSenzaCampoPrezzo(): void
+    {
+        $pizza = $this->pizza($this->rossi, 'Anna', 'Margherita', 700);
+        $component = $this->component();
+
+        $crawler = $component->call('startEdit', ['pizzaId' => $pizza->getId()])->render()->crawler();
+        self::assertCount(0, $crawler->filter('#edit-price-'.$pizza->getId()));
+
+        $component->set('editPerson', 'Luca')->call('save');
+        self::assertSame(700, $this->em->find(Pizza::class, $pizza->getId())->getPriceCents());
     }
 
     private function component(bool $asOrganizer = false): TestLiveComponent
@@ -141,7 +174,7 @@ final class PizzaOrderTest extends WebTestCase
         return $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi, 'asOrganizer' => $asOrganizer]);
     }
 
-    private function pizza(Eater $eater, string $person, string $name, int $cents): Pizza
+    private function pizza(Eater $eater, string $person, string $name, ?int $cents): Pizza
     {
         $pizza = new Pizza($eater, $person, $name, $cents);
         $this->em->persist($pizza);

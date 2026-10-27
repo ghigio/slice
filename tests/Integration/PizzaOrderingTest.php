@@ -32,7 +32,7 @@ final class PizzaOrderingTest extends KernelTestCase
 
     public function testAggiungePizzaConPrezzoInCentesimi(): void
     {
-        $pizza = $this->ordering->addPizza($this->rossi, ' Anna ', ' quattro  stagioni ', '8,50', false);
+        $pizza = $this->ordering->addPizza($this->rossi, ' Anna ', ' quattro  stagioni ', '8,50', true);
 
         self::assertNotNull($pizza->getId());
         self::assertSame('Anna', $pizza->getPerson());
@@ -55,7 +55,7 @@ final class PizzaOrderingTest extends KernelTestCase
     public function testDatiNonValidi(string $person, string $pizzaName, string $price, string $message): void
     {
         $this->expectExceptionObject(new EveningRuleException($message));
-        $this->ordering->addPizza($this->rossi, $person, $pizzaName, $price, false);
+        $this->ordering->addPizza($this->rossi, $person, $pizzaName, $price, true);
     }
 
     public static function statusRules(): iterable
@@ -97,9 +97,9 @@ final class PizzaOrderingTest extends KernelTestCase
 
     public function testModificaPizza(): void
     {
-        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', false);
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', true);
 
-        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna Maria', 'Margherita Bufala', '9.5', false);
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna Maria', 'Margherita Bufala', '9.5', true);
         $this->em->clear();
 
         $reloaded = $this->em->find(Pizza::class, $pizza->getId());
@@ -154,19 +154,51 @@ final class PizzaOrderingTest extends KernelTestCase
 
     public function testPrezzoFacoltativoConOrdiniAperti(): void
     {
-        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '  ', false);
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '  ', true);
         self::assertNull($pizza->getPriceCents());
 
-        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '7', false);
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '7', true);
         self::assertSame(700, $pizza->getPriceCents());
 
-        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '', false);
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '', true);
         self::assertNull($pizza->getPriceCents());
+    }
+
+    public function testIlGruppoNonInserisceIlPrezzoAncheConRichiesteCostruiteAMano(): void
+    {
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', false);
+        self::assertNull($pizza->getPriceCents());
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Margherita', '9', false);
+        self::assertNull($pizza->getPriceCents());
+
+        // Un prezzo non valido inviato dal gruppo non conta: il campo non esiste per il gruppo.
+        self::assertNull($this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', 'tanto', false)->getPriceCents());
+    }
+
+    public function testLaPizzaDelGruppoPrendeLUltimoPrezzoNotoPerQuelNome(): void
+    {
+        $bianchi = new Eater($this->evening, 'Famiglia Bianchi');
+        $this->em->flush();
+        $this->ordering->addPizza($bianchi, 'Marta', 'Margherita', '6,50', true);
+        $this->ordering->addPizza($bianchi, 'Gino', 'Margherita', '7', true);
+
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', ' margherita ', '', false);
+        self::assertSame(700, $pizza->getPriceCents());
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna Maria', 'Margherita', '', false);
+        self::assertSame(700, $pizza->getPriceCents(), 'Cambiando solo la persona il prezzo resta');
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'Diavola', '', false);
+        self::assertNull($pizza->getPriceCents(), 'Nessun prezzo noto per la Diavola');
+
+        $this->ordering->updatePizza($this->rossi, $pizza->getId(), 'Anna', 'MARGHERITA', '', false);
+        self::assertSame(700, $pizza->getPriceCents());
     }
 
     public function testConIlContoInseritoIlPrezzoEObbligatorio(): void
     {
-        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', false);
+        $pizza = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '7', true);
         $this->evening->setStatus(EveningStatus::OrdersClosed);
         $this->evening->enterBill(700, \App\Enum\DiscountMode::Proportional);
         $this->em->flush();
@@ -191,7 +223,7 @@ final class PizzaOrderingTest extends KernelTestCase
         $this->em->flush();
         $a = $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', false);
         $b = $this->ordering->addPizza($bianchi, 'Gino', ' margherita ', '', false);
-        $priced = $this->ordering->addPizza($bianchi, 'Marta', 'Margherita', '6,50', false);
+        $priced = $this->ordering->addPizza($bianchi, 'Marta', 'Margherita', '6,50', true);
         $other = $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', '', false);
 
         $updated = $this->ordering->setMissingPrices($this->evening, 'margherita', '7');

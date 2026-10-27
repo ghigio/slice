@@ -32,9 +32,9 @@ final class OptionalPriceTest extends WebTestCase
         $this->em->flush();
     }
 
-    public function testIlGruppoAggiungeUnaPizzaSenzaPrezzo(): void
+    public function testLOrganizzatoreAggiungeUnaPizzaSenzaPrezzo(): void
     {
-        $component = $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi]);
+        $component = $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi, 'asOrganizer' => true]);
         $crawler = $component->render()->crawler();
         self::assertStringContainsString('facoltativo', $crawler->filter('label[for$="-price"]')->text());
         self::assertNull($crawler->filter('input[data-model$="|price"]')->attr('required'));
@@ -52,7 +52,7 @@ final class OptionalPriceTest extends WebTestCase
         new Pizza($this->rossi, 'Anna', 'Diavola', null);
         $this->em->flush();
 
-        $crawler = $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi])->render()->crawler();
+        $crawler = $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi, 'asOrganizer' => true])->render()->crawler();
 
         self::assertStringContainsString('7,00 € + 1 da definire', $crawler->filter('[data-person-total]')->text());
         self::assertStringContainsString('1 pizza senza prezzo', $crawler->filter('[data-eater-total]')->text());

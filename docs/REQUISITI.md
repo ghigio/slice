@@ -8,7 +8,7 @@ Realizzare una web app mobile-first, solo in italiano, per gestire l'ordine di p
 
 L'app deve:
 
-- raccogliere gli ordini di ogni famiglia (persona, pizza, prezzo);
+- raccogliere gli ordini di ogni famiglia (persona e pizza; i prezzi li inserisce l'organizzatore);
 - produrre la lista aggregata delle pizze da dettare al pizzaiolo;
 - ridistribuire su tutte le pizze lo sconto ottenuto quando il pizzaiolo arrotonda il totale dello scontrino;
 - mostrare a ogni famiglia quanto deve rimborsare, con il dettaglio per persona;
@@ -138,15 +138,16 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 ### Gruppo (`/g/{token_gruppo}`)
 
 - Intestazione con nome della serata, pizzeria, data e nome del gruppo.
-- Con ordini aperti: aggiungere una pizza indicando nome della persona, nome della pizza e prezzo (facoltativo: se non è noto si lascia vuoto e la pizza mostra «Prezzo da definire»; i totali sommano i prezzi noti e indicano quante pizze sono senza prezzo); modificare ed eliminare le righe del proprio gruppo.
-- Il campo pizza propone in autocompletamento i nomi già inseriti nella serata da qualsiasi gruppo, per evitare varianti come «margherita» e «Margherita »; selezionando un nome viene proposto l'ultimo prezzo usato per quella pizza.
+- Con ordini aperti: aggiungere una pizza indicando nome della persona e nome della pizza, senza prezzo (chi ordina di solito non lo conosce: lo inserisce l'organizzatore); modificare ed eliminare le righe del proprio gruppo. Prima del conto il gruppo non vede prezzi né totali, solo l'elenco per persona con il numero di pizze. Una pizza aggiunta o rinominata dal gruppo prende l'ultimo prezzo noto per quel nome nella serata, altrimenti resta senza prezzo; cambiando solo la persona il prezzo resta. Il server ignora qualsiasi prezzo inviato da un gruppo.
+- Il campo pizza propone in autocompletamento i nomi già inseriti nella serata da qualsiasi gruppo, per evitare varianti come «margherita» e «Margherita ».
+- Quando l'organizzatore modifica le pizze di un gruppo, il form ha anche il prezzo (facoltativo: se non è noto si lascia vuoto e la pizza mostra «Prezzo da definire»; i totali sommano i prezzi noti e indicano quante pizze sono senza prezzo); selezionando un nome viene proposto l'ultimo prezzo usato per quella pizza.
 - Il campo persona propone i nomi già usati nel gruppo.
 - Elenco delle pizze del gruppo raggruppate per persona, con il totale.
 - Con ordini chiusi: stesso elenco in sola lettura, con messaggio «Ordini chiusi dall'organizzatore».
 - Con conto inserito: per ogni pizza prezzo di listino e prezzo scontato; totale per persona; totale da rimborsare all'organizzatore; sconto applicato in percentuale; note per il rimborso; stato «Rimborsato il …» oppure «Da rimborsare».
 - Il gruppo dell'organizzatore vede la propria quota con la dicitura «Nessun rimborso dovuto».
 - Un gruppo non vede le pizze, le quote né lo stato dei rimborsi degli altri gruppi.
-- Dettagli di implementazione: il prezzo accetta interi o al massimo due decimali, con virgola o punto ed eventuale simbolo «€» (es. «7», «7,5», «7.50 €»). Dopo l'inserimento il campo persona resta compilato per aggiungere più pizze alla stessa persona. I suggerimenti mostrano solo nomi e ultimo prezzo delle pizze della serata, mai nomi di persone o gruppi altrui; a parità di frequenza vince la forma digitata più recente. Al massimo 300 pizze per serata. Pagine e liste si aggiornano con polling ogni 15 secondi.
+- Dettagli di implementazione: il prezzo (solo organizzatore) accetta interi o al massimo due decimali, con virgola o punto ed eventuale simbolo «€» (es. «7», «7,5», «7.50 €»). Dopo l'inserimento il campo persona resta compilato per aggiungere più pizze alla stessa persona. I suggerimenti mostrano solo nomi delle pizze della serata (e ultimo prezzo, solo all'organizzatore), mai nomi di persone o gruppi altrui; a parità di frequenza vince la forma digitata più recente. Al massimo 300 pizze per serata. Pagine e liste si aggiornano con polling ogni 15 secondi.
 - L'organizzatore modifica le pizze di un gruppo dalla pagina `/s/{token_admin}/g/{token_gruppo}`, raggiungibile dal pulsante «Pizze» nella lista gruppi.
 
 ## Modello dati
@@ -195,7 +196,7 @@ Nel codice e nello schema i nomi sono in inglese; i testi dell'interfaccia resta
 | person | string(60) | Obbligatoria |
 | pizza\_name | string(80) | Obbligatorio, salvato come digitato ma senza spazi iniziali/finali e spazi multipli |
 | normalized\_name | string(80) | Minuscolo, senza accenti, spazi compattati; usato per aggregare |
-| price\_cents | int, nullable | Tra 1 e 10.000 (0,01 € – 100 €); null = prezzo da definire, obbligatorio prima del conto |
+| price\_cents | int, nullable | Tra 1 e 10.000 (0,01 € – 100 €); null = prezzo da definire, obbligatorio prima del conto; lo inserisce solo l'organizzatore |
 | created\_at, updated\_at | datetime |  |
 
 Nella lista per il pizzaiolo il nome mostrato per ogni gruppo di pizze uguali è la forma digitata più frequente.

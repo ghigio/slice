@@ -7,6 +7,7 @@ use App\Entity\Evening;
 use App\Entity\Pizza;
 use App\Enum\EveningStatus;
 use App\Repository\EveningRepository;
+use App\Twig\Components\MissingPrices;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -60,15 +61,15 @@ final class AcceptanceTest extends WebTestCase
         // Due membri dello stesso gruppo inseriscono pizze e vedono quelle dell'altro al prossimo aggiornamento (15 s).
         $memberOne = $this->createLiveComponent('PizzaOrder', ['eater' => $a]);
         $memberTwo = $this->createLiveComponent('PizzaOrder', ['eater' => $a]);
-        $memberOne->set('person', 'Anna')->set('pizzaName', 'Margherita')->set('price', '7')->call('add');
-        $memberTwo->set('person', 'Luca')->set('pizzaName', 'Diavola')->set('price', '8')->call('add');
+        $memberOne->set('person', 'Anna')->set('pizzaName', 'Margherita')->call('add');
+        $memberTwo->set('person', 'Luca')->set('pizzaName', 'Diavola')->call('add');
         $seenByOne = $memberOne->refresh()->render()->crawler();
         self::assertStringContainsString('Diavola', $seenByOne->text());
         self::assertStringContainsString('15000', $seenByOne->filter('[data-poll]')->attr('data-poll'));
 
         $groupB = $this->createLiveComponent('PizzaOrder', ['eater' => $b]);
-        $groupB->set('person', 'Marta')->set('pizzaName', 'Bufala')->set('price', '12')->call('add');
-        $groupB->set('person', 'Marta')->set('pizzaName', ' margherita ')->set('price', '6,50')->call('add');
+        $groupB->set('person', 'Marta')->set('pizzaName', 'Bufala')->call('add');
+        $groupB->set('person', 'Marta')->set('pizzaName', ' margherita ')->call('add');
 
         // La lista per il pizzaiolo aggrega «Margherita» e « margherita » in una sola riga e si copia come testo.
         $list = $this->createLiveComponent('PizzaList', ['evening' => $evening])->render()->crawler();
@@ -79,6 +80,17 @@ final class AcceptanceTest extends WebTestCase
         $blocked = $this->createLiveComponent('PizzaOrder', ['eater' => $b])->set('person', 'Marta')->set('pizzaName', 'Extra')->set('price', '5')->call('add')->render()->crawler();
         self::assertStringContainsString("Ordini chiusi dall'organizzatore", $blocked->text());
         self::assertSame(4, $this->pizzaCount());
+
+        // I prezzi li inserisce l'organizzatore: una volta per nome, poi corregge la singola pizza (caso 1).
+        // Il percorso completo supera il limite ridotto dei Live Components in ambiente test: si azzerano i contatori.
+        self::getContainer()->get('rate_limiter.cache')->clear();
+        $missing = $this->createLiveComponent('MissingPrices', ['evening' => $evening]);
+        foreach (['margherita' => '7', 'diavola' => '8', 'bufala' => '12'] as $name => $price) {
+            $missing->set('prices', [MissingPrices::key($name) => $price])->call('apply', ['normalizedName' => $name]);
+        }
+        $margheritaB = $this->em->getRepository(Pizza::class)->findOneBy(['eater' => $b, 'normalizedName' => 'margherita']);
+        $this->createLiveComponent('PizzaOrder', ['eater' => $b, 'asOrganizer' => true])
+            ->call('startEdit', ['pizzaId' => $margheritaB->getId()])->set('editPrice', '6,50')->call('save');
 
         // Inserito il totale pagato, ogni gruppo vede listino, scontato, totale per persona e da rimborsare (caso 1).
         $this->createLiveComponent('BillForm', ['evening' => $evening])->set('paidTotal', '30')->call('save');

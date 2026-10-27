@@ -37,6 +37,7 @@ final class PizzaOrder
     #[LiveProp(writable: true)]
     public string $pizzaName = '';
 
+    /** Solo per l'organizzatore: il prezzo inviato da un gruppo viene ignorato. */
     #[LiveProp(writable: true)]
     public string $price = '';
 
@@ -172,7 +173,7 @@ final class PizzaOrder
         return $this->pizzas->personsForEater($this->eater);
     }
 
-    /** @return array<string, string> nome normalizzato => ultimo prezzo («7,50»), per proporre il prezzo quando si sceglie una pizza */
+    /** @return array<string, string> nome normalizzato => ultimo prezzo («7,50»), per proporre all'organizzatore il prezzo quando sceglie una pizza */
     public function suggestedPrices(): array
     {
         $prices = [];
