@@ -169,6 +169,38 @@ final class PizzaOrderTest extends WebTestCase
         self::assertSame(700, $this->em->find(Pizza::class, $pizza->getId())->getPriceCents());
     }
 
+    public function testSuggerisceUnaPizzaSimileGiaInserita(): void
+    {
+        $this->pizza($this->bianchi, 'Marta', 'Salamino', null);
+        $component = $this->component();
+
+        $crawler = $component->render()->crawler();
+        self::assertStringContainsString('debounce', (string) $crawler->filter('#eater-'.$this->rossi->getId().'-pizza')->attr('data-model'));
+        self::assertCount(0, $crawler->filter('[data-similar-suggestion]'));
+
+        $crawler = $component->set('pizzaName', 'salamino piccante')->render()->crawler();
+        self::assertStringContainsString('Esiste già «Salamino»', $crawler->filter('[data-similar-suggestion]')->text());
+
+        $component->call('useSuggestion', ['field' => 'pizzaName']);
+        self::assertSame('Salamino', $component->component()->pizzaName);
+
+        $component->set('person', 'Anna')->call('add');
+        self::assertSame('Salamino', $this->em->getRepository(Pizza::class)->findOneBy(['eater' => $this->rossi])->getPizzaName());
+    }
+
+    public function testSuggerimentoAncheNellaModifica(): void
+    {
+        $this->pizza($this->bianchi, 'Marta', 'Margherita', null);
+        $pizza = $this->pizza($this->rossi, 'Anna', 'Diavola', null);
+        $component = $this->component();
+
+        $crawler = $component->call('startEdit', ['pizzaId' => $pizza->getId()])->set('editPizzaName', 'Magherita')->render()->crawler();
+        self::assertStringContainsString('Esiste già «Margherita»', $crawler->filter('[data-similar-suggestion]')->text());
+
+        $component->call('useSuggestion', ['field' => 'editPizzaName']);
+        self::assertSame('Margherita', $component->component()->editPizzaName);
+    }
+
     private function component(bool $asOrganizer = false): TestLiveComponent
     {
         return $this->createLiveComponent('PizzaOrder', ['eater' => $this->rossi, 'asOrganizer' => $asOrganizer]);

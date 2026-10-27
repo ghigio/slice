@@ -1,0 +1,8 @@
+{# Suggerimento di una pizza simile già inserita nella serata, sotto il campo pizza. #}
+{% if similar %}
+    <div class="form-text d-flex flex-wrap align-items-center gap-2 mt-1 mb-2" role="status" data-similar-suggestion>
+        <span>Esiste già «{{ similar }}»: vuoi usare questo nome?</span>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-action="live#action"
+                data-live-action-param="useSuggestion" data-live-field-param="{{ field }}">Usa «{{ similar }}»</button>
+    </div>
+{% endif %}

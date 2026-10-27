@@ -10,6 +10,7 @@ use App\Evening\PizzaOrdering;
 use App\Money\MoneyFormatter;
 use App\Repository\PizzaRepository;
 use App\Text\NameNormalizer;
+use App\Text\SimilarNames;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
@@ -117,6 +118,23 @@ final class PizzaOrder
 
             return 'Pizza eliminata.';
         });
+    }
+
+    /** Sostituisce il nome digitato con la pizza simile già inserita, ricalcolata lato server. */
+    #[LiveAction]
+    public function useSuggestion(#[LiveArg] string $field): void
+    {
+        match ($field) {
+            'pizzaName' => $this->pizzaName = $this->similarTo($this->pizzaName) ?? $this->pizzaName,
+            'editPizzaName' => $this->editPizzaName = $this->similarTo($this->editPizzaName) ?? $this->editPizzaName,
+            default => null,
+        };
+    }
+
+    /** Pizza già inserita nella serata simile al nome digitato (es. «Salamino» per «Salamino piccante»). */
+    public function similarTo(string $name): ?string
+    {
+        return SimilarNames::find($name, array_column($this->pizzaSuggestions(), 'name'));
     }
 
     /** Quote del conto per la vista del gruppo; null per l'organizzatore o se il conto non è inserito. */
