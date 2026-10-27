@@ -11,6 +11,7 @@ use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Symfony\UX\LiveComponent\Attribute\PreDehydrate;
 use Symfony\UX\LiveComponent\ComponentToolsTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -58,6 +59,21 @@ final class MissingPrices
     #[LiveListener('pizzasMerged')]
     public function refresh(): void
     {
+    }
+
+    /**
+     * Il live controller accetta solo modelli già presenti nelle props: ogni riga deve avere la sua chiave in $prices,
+     * altrimenti il prezzo digitato non viene inviato. Si conservano i valori digitati delle righe ancora presenti.
+     */
+    #[PreDehydrate]
+    public function initPrices(): void
+    {
+        $prices = [];
+        foreach ($this->getMissing() as $row) {
+            $key = self::key($row['normalizedName']);
+            $prices[$key] = $this->prices[$key] ?? '';
+        }
+        $this->prices = $prices;
     }
 
     /** @return list<array{name: string, normalizedName: string, quantity: int}> */

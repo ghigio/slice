@@ -92,6 +92,35 @@ final class OptionalPriceTest extends WebTestCase
         self::assertSame([700, 700, 800], array_map(fn (Pizza $p) => $p->getPriceCents(), $this->em->getRepository(Pizza::class)->findBy([], ['id' => 'ASC'])));
     }
 
+    public function testIlPrezzoDigitatoNelBrowserArrivaAlServer(): void
+    {
+        new Pizza($this->rossi, 'Anna', 'Margherita', null);
+        new Pizza($this->bianchi, 'Marta', 'Diavola', 800);
+        new Pizza($this->bianchi, 'Gino', 'Bufala', null);
+        $this->em->flush();
+
+        $html = $this->createLiveComponent('MissingPrices', ['evening' => $this->evening])->render()->toString();
+        $crawler = new Crawler($html);
+        $props = json_decode(html_entity_decode($crawler->filter('[data-live-props-value]')->attr('data-live-props-value')), true);
+
+        // Il live controller accetta solo modelli già presenti nelle props: ogni campo deve avere la sua chiave.
+        $models = $crawler->filter('input[data-model]')->each(fn (Crawler $n) => substr((string) $n->attr('data-model'), \strlen('norender|')));
+        self::assertCount(2, $models);
+        foreach ($models as $model) {
+            self::assertArrayHasKey(substr($model, \strlen('prices.')), $props['prices'], $model.' non inizializzato');
+        }
+
+        $client = self::getClient();
+        $client->request('POST', '/_components/MissingPrices/apply', [
+            'data' => json_encode(['props' => $props, 'updated' => ['prices.'.MissingPrices::key('margherita') => '7'], 'args' => ['normalizedName' => 'margherita']]),
+        ], [], ['HTTP_ACCEPT' => 'application/vnd.live-component+html', 'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('Inserisci il prezzo.', $client->getResponse()->getContent());
+        self::assertStringContainsString('Prezzo applicato a 1 pizza', $client->getResponse()->getContent());
+        self::assertSame([700, 800, null], array_map(fn (Pizza $p) => $p->getPriceCents(), $this->em->getRepository(Pizza::class)->findBy([], ['id' => 'ASC'])));
+    }
+
     public function testRiquadroVuotoSenzaPizzeDaCompletareEPresenteInAdmin(): void
     {
         new Pizza($this->rossi, 'Anna', 'Margherita', 700);
