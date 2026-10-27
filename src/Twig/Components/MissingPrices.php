@@ -9,6 +9,7 @@ use App\Repository\PizzaRepository;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentToolsTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
@@ -51,6 +52,12 @@ final class MissingPrices
         } catch (EveningRuleException $e) {
             $this->error = $e->getMessage();
         }
+    }
+
+    /** Pizze unite dall'organizzatore: i nomi senza prezzo cambiano subito. */
+    #[LiveListener('pizzasMerged')]
+    public function refresh(): void
+    {
     }
 
     /** @return list<array{name: string, normalizedName: string, quantity: int}> */

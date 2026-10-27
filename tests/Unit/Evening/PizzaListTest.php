@@ -36,6 +36,20 @@ final class PizzaListTest extends TestCase
         self::assertSame(4, $list->total());
     }
 
+    public function testNomiConChiaveDiAggregazione(): void
+    {
+        $list = PizzaList::fromPizzas([
+            new Pizza($this->rossi, 'Anna', 'Salamino piccante', null),
+            new Pizza($this->rossi, 'Luca', 'Salamino', 700),
+            new Pizza($this->bianchi, 'Marta', 'salamino', 700),
+        ]);
+
+        self::assertSame([
+            ['name' => 'salamino', 'normalizedName' => 'salamino', 'quantity' => 2],
+            ['name' => 'Salamino piccante', 'normalizedName' => 'salamino piccante', 'quantity' => 1],
+        ], $list->names());
+    }
+
     public function testOrdineAlfabeticoSenzaAccentiEMaiuscole(): void
     {
         $list = PizzaList::fromPizzas([

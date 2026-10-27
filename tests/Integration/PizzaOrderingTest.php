@@ -257,4 +257,86 @@ final class PizzaOrderingTest extends KernelTestCase
         $this->expectExceptionObject(new EveningRuleException('La serata è archiviata: riaprila per modificarla.'));
         $this->ordering->setMissingPrices($this->evening, 'margherita', '7');
     }
+
+    public function testUnisceLePizzeConNomeEPrezzoDellaDestinazione(): void
+    {
+        $bianchi = new Eater($this->evening, 'Famiglia Bianchi');
+        $this->em->flush();
+        $salamino = $this->ordering->addPizza($this->rossi, 'Anna', 'Salamino', '7', true);
+        $a = $this->ordering->addPizza($bianchi, 'Marta', 'Salamino piccante', '', true);
+        $b = $this->ordering->addPizza($bianchi, 'Gino', 'salamino  piccante', '8', true);
+        $other = $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', '', true);
+
+        $merged = $this->ordering->mergePizzas($this->evening, 'salamino piccante', 'salamino');
+
+        self::assertSame(2, $merged);
+        foreach ([$salamino, $a, $b] as $pizza) {
+            self::assertSame('Salamino', $pizza->getPizzaName());
+            self::assertSame('salamino', $pizza->getNormalizedName());
+            self::assertSame(700, $pizza->getPriceCents());
+        }
+        self::assertSame('Diavola', $other->getPizzaName());
+        self::assertSame(['Gino', 'Marta'], array_map(fn (Pizza $p) => $p->getPerson(), [$b, $a]), 'Persone e gruppi restano invariati');
+    }
+
+    public function testSenzaPrezzoDiDestinazioneLePizzeUniteMantengonoIlLoro(): void
+    {
+        $this->ordering->addPizza($this->rossi, 'Anna', 'Diavola', '', true);
+        $spicy = $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola piccante', '8', true);
+
+        $this->ordering->mergePizzas($this->evening, 'diavola piccante', 'diavola');
+
+        self::assertSame('Diavola', $spicy->getPizzaName());
+        self::assertSame(800, $spicy->getPriceCents());
+    }
+
+    public static function invalidMerges(): iterable
+    {
+        yield 'stessa pizza' => ['margherita', 'margherita', 'Scegli due pizze diverse.'];
+        yield 'pizza da unire inesistente' => ['capricciosa', 'margherita', 'Pizza non trovata.'];
+        yield 'destinazione inesistente' => ['margherita', 'capricciosa', 'Pizza non trovata.'];
+    }
+
+    #[DataProvider('invalidMerges')]
+    public function testUnioneNonValida(string $from, string $into, string $message): void
+    {
+        $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', true);
+
+        $this->expectExceptionObject(new EveningRuleException($message));
+        $this->ordering->mergePizzas($this->evening, $from, $into);
+    }
+
+    public function testUnioneConsentitaAOrdiniChiusiMaNonDaArchiviata(): void
+    {
+        $this->ordering->addPizza($this->rossi, 'Anna', 'Margherita', '', true);
+        $this->ordering->addPizza($this->rossi, 'Luca', 'Magherita', '', true);
+        $this->evening->setStatus(EveningStatus::OrdersClosed);
+        self::assertSame(1, $this->ordering->mergePizzas($this->evening, 'magherita', 'margherita'));
+
+        $this->ordering->addPizza($this->rossi, 'Gino', 'Margerita', '', true);
+        $this->evening->setStatus(EveningStatus::Archived);
+        $this->expectExceptionObject(new EveningRuleException('La serata è archiviata: riaprila per modificarla.'));
+        $this->ordering->mergePizzas($this->evening, 'margerita', 'margherita');
+    }
+
+    public function testConIlContoInseritoUnioneRifiutataSeRendeImpossibileIlCalcolo(): void
+    {
+        $baby = $this->ordering->addPizza($this->rossi, 'Anna', 'Baby', '3', true);
+        $this->ordering->addPizza($this->rossi, 'Luca', 'Gigante', '30', true);
+        $margherita = $this->ordering->addPizza($this->rossi, 'Gino', 'Margherita', '3', true);
+        $this->evening->setStatus(EveningStatus::OrdersClosed);
+        $this->evening->enterBill(3000, \App\Enum\DiscountMode::Equal);
+        $this->em->flush();
+
+        try {
+            $this->ordering->mergePizzas($this->evening, 'margherita', 'gigante');
+            self::fail('Attesa EveningRuleException');
+        } catch (EveningRuleException $e) {
+            self::assertStringContainsString('la pizza Baby di Anna', $e->getMessage());
+            self::assertStringContainsString('passa alla modalità proporzionale', $e->getMessage());
+        }
+        self::assertSame('Margherita', $margherita->getPizzaName());
+        self::assertSame(300, $margherita->getPriceCents());
+        self::assertSame(300, $baby->getPriceCents());
+    }
 }

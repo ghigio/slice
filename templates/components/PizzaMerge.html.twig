@@ -1,0 +1,55 @@
+<section {{ attributes }} data-poll="delay(15000)|$render" class="mb-4">
+    {% set names = this.names %}
+    {% if evening.canManageEaters and names|length >= 2 %}
+        {% set duplicates = this.duplicates %}
+        <h2 class="h5">Unisci pizze</h2>
+        {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+        {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+        <div {{ stimulus_controller('confirm') }}>
+            {% if duplicates is not empty %}
+                <div class="card border-info mb-3">
+                    <div class="card-body">
+                        <h3 class="h6">Possibili doppioni</h3>
+                        <p class="small text-body-secondary">Le pizze unite prendono il nome e, se noto, il prezzo della pizza scelta.</p>
+                        {% for pair in duplicates %}
+                            <div class="border-top pt-2 mb-2" data-duplicate>
+                                <p class="mb-2">{{ pair[0].name }} ({{ pair[0].quantity }}) · {{ pair[1].name }} ({{ pair[1].quantity }})</p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for target in [pair[0], pair[1]] %}
+                                        {% set source = target == pair[0] ? pair[1] : pair[0] %}
+                                        <button type="button" class="btn btn-outline-primary" data-action="confirm#ask live#action"
+                                                data-live-action-param="merge"
+                                                data-live-from-param="{{ source.normalizedName }}" data-live-into-param="{{ target.normalizedName }}"
+                                                data-confirm-message-param="Unire {{ source.quantity }} {{ source.name }} in {{ target.name }}?">Unisci in «{{ target.name }}»</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <form class="row g-2 align-items-end" data-action="confirm#ask live#action:prevent" data-live-action-param="mergeSelected"
+                  data-confirm-message-param="Unire le pizze scelte? Prendono il nome e, se noto, il prezzo della seconda.">
+                <div class="col-12 col-sm-5">
+                    <label for="merge-from" class="form-label">Pizza</label>
+                    <select id="merge-from" class="form-select" data-model="norender|from">
+                        <option value="">Scegli…</option>
+                        {% for line in names %}<option value="{{ line.normalizedName }}" {{ from == line.normalizedName ? 'selected' }}>{{ line.name }} ({{ line.quantity }})</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-sm-5">
+                    <label for="merge-into" class="form-label">Unisci in</label>
+                    <select id="merge-into" class="form-select" data-model="norender|into">
+                        <option value="">Scegli…</option>
+                        {% for line in names %}<option value="{{ line.normalizedName }}" {{ into == line.normalizedName ? 'selected' }}>{{ line.name }} ({{ line.quantity }})</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-sm-2">
+                    <button type="submit" class="btn btn-primary w-100">Unisci</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</section>

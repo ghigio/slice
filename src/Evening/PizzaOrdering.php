@@ -13,6 +13,7 @@ use App\Money\InvalidPriceException;
 use App\Money\MoneyFormatter;
 use App\Money\PriceParser;
 use App\Text\NameNormalizer;
+use App\Text\PreferredForm;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -110,6 +111,49 @@ final class PizzaOrdering
         $this->em->flush();
 
         return $updated;
+    }
+
+    /**
+     * L'organizzatore unisce due pizze (es. «Salamino piccante» in «Salamino»): le pizze unite prendono il nome mostrato
+     * della destinazione e il suo ultimo prezzo noto; se la destinazione non ha prezzo mantengono il loro.
+     *
+     * @return int numero di pizze unite
+     */
+    public function mergePizzas(Evening $evening, string $fromNormalizedName, string $intoNormalizedName): int
+    {
+        $this->assertCanEdit($evening, true);
+        if ($fromNormalizedName === $intoNormalizedName) {
+            throw new EveningRuleException('Scegli due pizze diverse.');
+        }
+
+        $from = [];
+        $intoForms = [];
+        $intoPrice = null;
+        foreach ($this->em->getRepository(Pizza::class)->findForEvening($evening) as $pizza) {
+            if ($pizza->getNormalizedName() === $fromNormalizedName) {
+                $from[] = $pizza;
+            } elseif ($pizza->getNormalizedName() === $intoNormalizedName) {
+                $intoForms[] = $pizza->getPizzaName();
+                $intoPrice = $pizza->getPriceCents() ?? $intoPrice;
+            }
+        }
+        if ([] === $from || [] === $intoForms) {
+            throw new EveningRuleException('Pizza non trovata.');
+        }
+
+        if (null !== $intoPrice) {
+            $changed = array_fill_keys(array_map(spl_object_id(...), $from), $intoPrice);
+            $this->assertBillStillComputable($evening, fn (array $prices) => array_replace($prices, $changed), []);
+        }
+
+        $intoName = PreferredForm::pick($intoForms);
+        foreach ($from as $pizza) {
+            $pizza->setPizzaName($intoName);
+            $pizza->setPriceCents($intoPrice ?? $pizza->getPriceCents());
+        }
+        $this->em->flush();
+
+        return \count($from);
     }
 
     public static function canEdit(Evening $evening, bool $asOrganizer): bool

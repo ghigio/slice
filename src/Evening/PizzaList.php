@@ -98,11 +98,31 @@ final class PizzaList
     }
 
     /**
+     * Come lines(), con il nome normalizzato che identifica la pizza (per unire due pizze).
+     *
+     * @return list<array{name: string, normalizedName: string, quantity: int}>
+     */
+    public function names(): array
+    {
+        return $this->count($this->pizzas);
+    }
+
+    /**
      * @param list<Pizza> $pizzas
      *
      * @return list<array{name: string, quantity: int}>
      */
     private function aggregate(array $pizzas): array
+    {
+        return array_map(fn (array $line) => ['name' => $line['name'], 'quantity' => $line['quantity']], $this->count($pizzas));
+    }
+
+    /**
+     * @param list<Pizza> $pizzas
+     *
+     * @return list<array{name: string, normalizedName: string, quantity: int}>
+     */
+    private function count(array $pizzas): array
     {
         $quantities = [];
         foreach ($pizzas as $pizza) {
@@ -113,7 +133,7 @@ final class PizzaList
 
         $lines = [];
         foreach ($quantities as $key => $quantity) {
-            $lines[] = ['name' => $this->displayNames[(string) $key], 'quantity' => $quantity];
+            $lines[] = ['name' => $this->displayNames[(string) $key], 'normalizedName' => (string) $key, 'quantity' => $quantity];
         }
 
         return $lines;

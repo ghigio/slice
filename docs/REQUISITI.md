@@ -110,6 +110,13 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Avviso se la stessa pizza ha prezzi diversi tra gruppi (possibile errore di inserimento), con l'elenco delle righe coinvolte.
 - Dettagli di implementazione: il testo copiato contiene solo le righe `quantità x nome` in ordine alfabetico (senza distinzione di maiuscole e accenti); il totale delle pizze è mostrato a schermo. Il nome mostrato è la forma digitata più frequente, a parità la più recente. La vista per gruppo riporta le quantità per pizza di ogni gruppo. L'avviso compare quando due pizze con lo stesso nome normalizzato hanno prezzi diversi in gruppi diversi (prezzi diversi nello stesso gruppo non generano avviso) ed elenca tutte le righe di quella pizza con gruppo, persona, nome digitato e prezzo. La lista si aggiorna con polling ogni 15 secondi.
 
+**Unisci pizze**
+
+- Riquadro «Unisci pizze» prima della lista per il pizzaiolo, visibile con almeno due pizze diverse e in ogni stato tranne «Archiviata».
+- «Possibili doppioni»: le coppie di nomi simili (stessa regola del suggerimento nella pagina del gruppo), ciascuna con il numero di pizze e i pulsanti «Unisci in «A»» e «Unisci in «B»».
+- Unione libera tra due pizze qualsiasi con due elenchi («Pizza» e «Unisci in»), per i casi che la somiglianza non trova.
+- Conferma esplicita prima di unire. Le pizze unite prendono il nome mostrato della destinazione e il suo ultimo prezzo noto; se la destinazione non ha prezzo mantengono il loro. Persone e gruppi non cambiano. Con il conto inserito l'unione è rifiutata se rende impossibile il calcolo in modalità uguale, come le altre modifiche alle pizze. Dopo l'unione si aggiornano subito lista per il pizzaiolo, «Pizze senza prezzo» e anteprima del conto.
+
 **Conto e sconto**
 
 - Somma dei prezzi inseriti («totale da listino»).

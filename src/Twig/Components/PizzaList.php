@@ -6,6 +6,7 @@ use App\Entity\Evening;
 use App\Evening\PizzaList as PizzaListModel;
 use App\Repository\PizzaRepository;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
+use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -28,6 +29,13 @@ final class PizzaList
 
     public function __construct(private readonly PizzaRepository $pizzas)
     {
+    }
+
+    /** Pizze unite dall'organizzatore: la lista si aggiorna subito, senza aspettare il polling. */
+    #[LiveListener('pizzasMerged')]
+    public function refresh(): void
+    {
+        $this->list = null;
     }
 
     public function getList(): PizzaListModel

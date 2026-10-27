@@ -71,8 +71,9 @@ final class BillForm
         }
     }
 
-    /** Prezzi mancanti completati dall'organizzatore: l'anteprima va ricalcolata. */
+    /** Prezzi mancanti completati o pizze unite dall'organizzatore: l'anteprima va ricalcolata. */
     #[LiveListener('pricesUpdated')]
+    #[LiveListener('pizzasMerged')]
     public function refresh(): void
     {
         $this->previewComputed = false;
