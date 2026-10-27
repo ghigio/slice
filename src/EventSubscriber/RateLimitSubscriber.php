@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -12,6 +13,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
  * Limiti per IP: creazione serate, pagine con token (/s, /g, /i), Live Components e tentativi con token inesistenti.
+ * Disattivato solo in ambiente dev (parametro app.rate_limiting), per provare l'app senza blocchi.
  */
 final class RateLimitSubscriber
 {
@@ -22,13 +24,15 @@ final class RateLimitSubscriber
         private readonly RateLimiterFactoryInterface $tokenPagesLimiter,
         private readonly RateLimiterFactoryInterface $liveComponentsLimiter,
         private readonly RateLimiterFactoryInterface $unknownTokensLimiter,
+        #[Autowire('%app.rate_limiting%')]
+        private readonly bool $enabled = true,
     ) {
     }
 
     #[AsEventListener(priority: 20)]
     public function onRequest(RequestEvent $event): void
     {
-        if (!$event->isMainRequest()) {
+        if (!$this->enabled || !$event->isMainRequest()) {
             return;
         }
         $request = $event->getRequest();
@@ -51,7 +55,7 @@ final class RateLimitSubscriber
     #[AsEventListener]
     public function onResponse(ResponseEvent $event): void
     {
-        if ($event->isMainRequest() && 404 === $event->getResponse()->getStatusCode() && preg_match(self::TOKEN_PATHS, $event->getRequest()->getPathInfo())) {
+        if ($this->enabled && $event->isMainRequest() && 404 === $event->getResponse()->getStatusCode() && preg_match(self::TOKEN_PATHS, $event->getRequest()->getPathInfo())) {
             $this->unknownTokensLimiter->create($this->ip($event->getRequest()))->consume();
         }
     }

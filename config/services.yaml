@@ -8,6 +8,9 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.backup_dir: '%kernel.project_dir%/var/backups'
+    # Rate limiting attivo ovunque (prod e test) tranne in dev: è un parametro, non una variabile d'ambiente,
+    # così in produzione non si può spegnere per errore.
+    app.rate_limiting: true
 
 services:
     # default configuration for services in *this* file
@@ -22,6 +25,10 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@dev:
+    parameters:
+        app.rate_limiting: false
 
 when@test:
     parameters:

@@ -104,6 +104,8 @@ Va chiamato almeno una volta al giorno, per esempio da un servizio di cron ester
 
 ### 5. Proxy fidati e rate limiting
 
+Il rate limiting è attivo in `prod` e in `test`, con limiti ridotti per i test. In `dev` è disattivato (parametro `app.rate_limiting` in `config/services.yaml`) per provare l'app senza blocchi. In produzione `APP_ENV` deve essere `prod`.
+
 I limiti per IP funzionano solo se l'app vede l'IP reale dei client. La documentazione fortrabbit non descrive proxy o header inoltrati, quindi va verificato:
 
 1. Senza `TRUSTED_PROXIES`, apri l'URL dei job dal telefono con la rete mobile e confronta «IP del client» con il tuo IP pubblico.
