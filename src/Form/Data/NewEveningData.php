@@ -2,6 +2,7 @@
 
 namespace App\Form\Data;
 
+use App\Entity\Pizzeria;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -15,6 +16,9 @@ final class NewEveningData
 
     #[Assert\NotNull]
     public ?\DateTimeImmutable $date = null;
+
+    /** Pizzeria nota scelta dall'elenco; null = «Altra pizzeria», con il nome libero in $pizzeria. */
+    public ?Pizzeria $knownPizzeria = null;
 
     #[Assert\Length(max: 255)]
     public ?string $pizzeria = null;

@@ -3,7 +3,9 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Evening;
+use App\Entity\Pizzeria;
 use App\Repository\EveningRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -106,6 +108,58 @@ final class EveningCreationTest extends WebTestCase
         self::assertSame(0, self::getContainer()->get(EveningRepository::class)->count([]));
     }
 
+    public function testSenzaPizzerieNoteIlFormResta(): void
+    {
+        $this->client->request('GET', '/nuova-serata');
+
+        self::assertSelectorNotExists('select[name="new_evening[knownPizzeria]"]');
+        self::assertSelectorExists('input[name="new_evening[pizzeria]"]');
+    }
+
+    public function testSceltaDiUnaPizzeriaNota(): void
+    {
+        [$gino] = $this->pizzerias('Da Gino', 'Da Totò');
+
+        $crawler = $this->client->request('GET', '/nuova-serata');
+        $options = $crawler->filter('select[name="new_evening[knownPizzeria]"] option')->each(fn ($o) => $o->text());
+        self::assertSame(['Altra pizzeria', 'Da Gino', 'Da Totò'], $options);
+        self::assertSame('Nome della pizzeria', $crawler->filter('label[for="new_evening_pizzeria"]')->text());
+
+        $this->submitForm(['name' => 'Serata', 'date' => '2026-10-19', 'knownPizzeria' => (string) $gino->getId(), 'pizzeria' => 'ignorato', 'organizerName' => 'Org']);
+
+        self::assertResponseRedirects();
+        $evening = $this->findEvening(substr($this->client->getResponse()->headers->get('Location'), 3));
+        self::assertSame($gino->getId(), $evening->getKnownPizzeria()?->getId());
+        self::assertSame('Da Gino', $evening->getPizzeria());
+    }
+
+    public function testAltraPizzeriaConNomeLibero(): void
+    {
+        $this->pizzerias('Da Gino');
+
+        $this->submitForm(['name' => 'Serata', 'date' => '2026-10-19', 'knownPizzeria' => '', 'pizzeria' => 'Bella Napoli', 'organizerName' => 'Org']);
+
+        self::assertResponseRedirects();
+        $evening = $this->findEvening(substr($this->client->getResponse()->headers->get('Location'), 3));
+        self::assertNull($evening->getKnownPizzeria());
+        self::assertSame('Bella Napoli', $evening->getPizzeria());
+    }
+
+    public function testPizzeriaInesistenteRifiutata(): void
+    {
+        $this->pizzerias('Da Gino');
+        $crawler = $this->client->request('GET', '/nuova-serata');
+        $form = $crawler->selectButton('Crea la serata')->form();
+        $values = $form->getPhpValues();
+        $values['new_evening'] = ['name' => 'Serata', 'date' => '2026-10-19', 'knownPizzeria' => '999999', 'organizerName' => 'Org'] + $values['new_evening'];
+
+        $this->client->request('POST', '/nuova-serata', $values);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('.invalid-feedback', "Scegli una pizzeria dell'elenco.");
+        self::assertSame(0, self::getContainer()->get(EveningRepository::class)->count([]));
+    }
+
     public function testTokenAdminNonValidoDa404(): void
     {
         $this->client->request('GET', '/s/'.str_repeat('a', 64));
@@ -124,6 +178,17 @@ final class EveningCreationTest extends WebTestCase
             $form["new_evening[$field]"] = $value;
         }
         $this->client->submit($form);
+    }
+
+    /** @return list<Pizzeria> */
+    private function pizzerias(string ...$names): array
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $pizzerias = array_map(fn (string $name) => new Pizzeria($name), $names);
+        array_walk($pizzerias, $em->persist(...));
+        $em->flush();
+
+        return $pizzerias;
     }
 
     private function findEvening(string $adminToken): ?Evening

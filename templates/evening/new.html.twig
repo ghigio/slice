@@ -4,5 +4,7 @@
 
 {% block body %}
     <h1 class="h3 mb-3">Nuova serata</h1>
-    {{ form(form) }}
+    <div {{ stimulus_controller('pizzeria-choice') }}>
+        {{ form(form) }}
+    </div>
 {% endblock %}

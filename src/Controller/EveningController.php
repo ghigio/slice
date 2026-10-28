@@ -25,6 +25,9 @@ final class EveningController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $evening = new Evening($data->name, $data->date, $data->organizerName, $data->pizzeria, $data->refundNotes);
+            if (null !== $data->knownPizzeria) {
+                $evening->setKnownPizzeria($data->knownPizzeria);
+            }
             $em->persist($evening);
             $em->flush();
 

@@ -86,6 +86,7 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 
 - Pagina iniziale con una breve spiegazione e il pulsante «Crea una serata».
 - Creazione: nome della serata (es. «Pizza da Gino»), data, nome della pizzeria (facoltativo), nome dell'organizzatore, note per il rimborso (facoltative, es. IBAN o numero Satispay, mostrate ai gruppi).
+- Se nell'archivio ci sono pizzerie (vedi «Gestione delle pizzerie»), il campo «Pizzeria» diventa un elenco: prima voce, predefinita, «Altra pizzeria», poi le pizzerie note in ordine alfabetico. Con «Altra pizzeria» compare il campo «Nome della pizzeria» (facoltativo) e il flusso è quello di sempre; con una pizzeria nota la serata ne copia il nome e i gruppi scelgono le pizze dal suo menu. Una pizzeria inesistente viene rifiutata («Scegli una pizzeria dell'elenco.»). Senza pizzerie nell'archivio il form resta com'era. La pizzeria si sceglie solo alla creazione.
 - Dopo la creazione l'organizzatore viene portato alla pagina admin, con un avviso ben visibile: «Salva questo link, è l'unico modo per gestire la serata» e un pulsante per copiarlo.
 - Rotte: home `/`, creazione `/nuova-serata`. La data è precompilata con il giorno corrente; le note per il rimborso hanno al massimo 1000 caratteri. L'avviso compare subito dopo la creazione, mentre il link admin con il pulsante di copia resta sempre visibile in testa alla pagina admin.
 
