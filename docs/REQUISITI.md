@@ -211,6 +211,12 @@ Nella lista per il pizzaiolo il nome mostrato per ogni gruppo di pizze uguali è
 
 Limiti: al massimo 50 gruppi per serata e 300 pizze per serata.
 
+**Pizzerie** (`pizzerias`, entità `Pizzeria`): name string(100), normalized\_name string(100) unico (senza distinzione di maiuscole, accenti e spazi). La serata ha `pizzeria_id` (FK nullable, impostata a NULL se la pizzeria viene eliminata) e conserva comunque il nome in `pizzeria`.
+
+**Ingredienti** (`ingredients`, entità `Ingredient`): pizzeria\_id FK con cancellazione a cascata, name string(60), normalized\_name string(60), unico per pizzeria.
+
+**Pizze del menu** (`menu_pizzas`, entità `MenuPizza`): pizzeria\_id FK con cancellazione a cascata, name string(80), normalized\_name string(80) unico per pizzeria, price\_cents int nullable (1–10.000). Gli ingredienti sono nella tabella `menu_pizza_ingredients` (cancellazione a cascata su entrambi i lati). Le pizze ordinate copiano solo il nome: modificare o eliminare il menu non tocca le serate.
+
 ## Algoritmo dello sconto
 
 Ogni pizza riceve un prezzo scontato arrotondato al centesimo; la quota di un gruppo è la somma dei prezzi scontati delle sue pizze, e l'eventuale scarto dovuto agli arrotondamenti non viene ridistribuito ma mostrato all'organizzatore.
@@ -308,7 +314,7 @@ Criteri di accettazione (spuntati quelli verificati dai test automatici in `test
 
 ## Fuori ambito e piano di lavoro
 
-**Fuori ambito per questa versione**: account e login, menu salvati delle pizzerie, bevande e altri prodotti, coperto, varianti e aggiunte (es. «Margherita baby» si inserisce come pizza a sé), elementi condivisi tra persone, pagamenti online, rimborsi tra persone diverse dall'organizzatore, notifiche, lingue diverse dall'italiano, storico tra serate.
+**Fuori ambito per questa versione**: account e login (salvo l'unico account dell'area di gestione delle pizzerie), bevande e altri prodotti, coperto, varianti e aggiunte (es. «Margherita baby» si inserisce come pizza a sé), elementi condivisi tra persone, pagamenti online, rimborsi tra persone diverse dall'organizzatore, notifiche, lingue diverse dall'italiano, storico tra serate.
 
 **Piano di lavoro per Claude Code**, da eseguire in ordine e con un commit per fase:
 

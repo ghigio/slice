@@ -1,0 +1,45 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        # Unico account di gestione, da ADMIN_USERNAME e ADMIN_PASSWORD_HASH (vedi README).
+        admin:
+            id: App\Security\AdminUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler(/|$)|(_wdt|assets|build)/)
+            security: false
+        # Solo l'area di gestione delle pizzerie ha un login: il resto dell'app si usa con i link segreti.
+        gestione:
+            pattern: ^/gestione
+            lazy: true
+            provider: admin
+            form_login:
+                login_path: gestione_login
+                check_path: gestione_login
+                default_target_path: gestione
+                always_use_default_target_path: true
+                enable_csrf: true
+            login_throttling:
+                max_attempts: 5
+                interval: '1 minute'
+            logout:
+                path: gestione_logout
+                target: gestione_login
+                enable_csrf: true
+
+    access_control:
+        - { path: ^/gestione/login, roles: PUBLIC_ACCESS }
+        - { path: ^/gestione, roles: ROLE_ADMIN }
+
+when@test:
+    security:
+        password_hashers:
+            # Costo minimo nei test, per non rallentarli.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

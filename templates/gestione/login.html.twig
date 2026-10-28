@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accesso alla gestione · Slice{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Accesso alla gestione</h1>
+    <p class="text-body-secondary">Area riservata alla gestione delle pizzerie e dei loro menu.</p>
+
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+
+    <form method="post" action="{{ path('gestione_login') }}">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input id="username" type="text" name="_username" value="{{ username }}" class="form-control form-control-lg" autocomplete="username" required autofocus>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input id="password" type="password" name="_password" class="form-control form-control-lg" autocomplete="current-password" required>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button type="submit" class="btn btn-primary btn-lg w-100">Entra</button>
+    </form>
+{% endblock %}

@@ -43,6 +43,8 @@ final class MigrationsPreserveDataTest extends TestCase
         self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM pizzas'));
         self::assertSame(700, (int) $connection->fetchOne('SELECT price_cents FROM pizzas'));
         self::assertSame(64, \strlen((string) $connection->fetchOne('SELECT invite_token FROM evenings')));
+        self::assertNull($connection->fetchOne('SELECT pizzeria_id FROM evenings'));
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM pizzerias'));
         $connection->close();
     }
 

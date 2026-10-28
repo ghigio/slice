@@ -42,6 +42,10 @@ I valori predefiniti sono in `.env`; le modifiche locali vanno in `.env.local` (
 | `DEFAULT_URI` | URL pubblico dell'app, usato dai comandi console |
 | `JOBS_SECRET` | Segreto (almeno 32 caratteri) dell'URL `/_jobs/run/{segreto}` che avvia pulizia e backup |
 | `TRUSTED_PROXIES` | Proxy fidati davanti all'app, per vedere l'IP reale dei client nel rate limiting (vedi deploy) |
+| `ADMIN_USERNAME` | Username dell'unico account dell'area `/gestione` (pizzerie e menu) |
+| `ADMIN_PASSWORD_HASH` | Hash della password di quell'account; con una delle due variabili vuota nessuno può entrare |
+
+Per l'area `/gestione` si genera l'hash della password con `lando console security:hash-password` e lo si copia in `ADMIN_PASSWORD_HASH`. Nei file `.env` va tra apici singoli (`ADMIN_PASSWORD_HASH='$2y$13$…'`) perché contiene `$`; su fortrabbit si incolla così com'è nella dashboard. Il login blocca dopo 5 tentativi falliti al minuto.
 
 `DATABASE_URL`, variante SQLite (predefinita):
 

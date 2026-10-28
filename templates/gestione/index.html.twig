@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pizzerie · Slice{% endblock %}
+
+{% block body %}
+    {{ include('gestione/_header.html.twig', {title: 'Pizzerie'}) }}
+    {% if pizzerias is empty %}
+        <p class="text-body-secondary">Nessuna pizzeria.</p>
+    {% else %}
+        <ul class="list-group">
+            {% for pizzeria in pizzerias %}<li class="list-group-item">{{ pizzeria.name }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -48,6 +48,11 @@ class Evening
     #[Assert\Length(max: 255)]
     private ?string $pizzeria = null;
 
+    /** Pizzeria nota scelta alla creazione: la serata ne mostra il menu. Se viene eliminata resta il nome in $pizzeria. */
+    #[ORM\ManyToOne(targetEntity: Pizzeria::class)]
+    #[ORM\JoinColumn(name: 'pizzeria_id', nullable: true, onDelete: 'SET NULL')]
+    private ?Pizzeria $knownPizzeria = null;
+
     #[ORM\Column]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -137,6 +142,18 @@ class Evening
     {
         $pizzeria = null === $pizzeria ? '' : NameNormalizer::clean($pizzeria);
         $this->pizzeria = '' === $pizzeria ? null : $pizzeria;
+    }
+
+    public function getKnownPizzeria(): ?Pizzeria
+    {
+        return $this->knownPizzeria;
+    }
+
+    /** Collega la pizzeria nota e ne copia il nome. */
+    public function setKnownPizzeria(Pizzeria $pizzeria): void
+    {
+        $this->knownPizzeria = $pizzeria;
+        $this->setPizzeria($pizzeria->getName());
     }
 
     public function getOrganizerName(): string
