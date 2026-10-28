@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Repository\PizzeriaRepository;
+use App\Entity\Pizzeria;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,9 +15,15 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 final class PizzeriaAdminController extends AbstractController
 {
     #[Route('/gestione', name: 'gestione', methods: ['GET'])]
-    public function index(PizzeriaRepository $pizzerias): Response
+    public function index(): Response
     {
-        return $this->render('gestione/index.html.twig', ['pizzerias' => $pizzerias->findAllSorted()]);
+        return $this->render('gestione/index.html.twig');
+    }
+
+    #[Route('/gestione/pizzerie/{id}', name: 'gestione_pizzeria', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function pizzeria(Pizzeria $pizzeria): Response
+    {
+        return $this->render('gestione/pizzeria.html.twig', ['pizzeria' => $pizzeria]);
     }
 
     #[Route('/gestione/login', name: 'gestione_login', methods: ['GET', 'POST'])]

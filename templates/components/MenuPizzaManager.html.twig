@@ -1,0 +1,67 @@
+{# Campi di una pizza del menu, per l'aggiunta e per la modifica. #}
+{% macro fields(prefix, name_model, name, price_model, price, ingredients_model, selected, ingredients) %}
+    <div class="mb-2">
+        <label for="{{ prefix }}-name" class="form-label">Nome</label>
+        <input id="{{ prefix }}-name" type="text" class="form-control" maxlength="80" data-model="norender|{{ name_model }}" value="{{ name }}">
+    </div>
+    <div class="mb-2">
+        <label for="{{ prefix }}-price" class="form-label">Prezzo (€), facoltativo</label>
+        <input id="{{ prefix }}-price" type="text" inputmode="decimal" class="form-control" placeholder="7,50" data-model="norender|{{ price_model }}" value="{{ price }}">
+    </div>
+    <fieldset class="mb-3">
+        <legend class="form-label fs-6">Ingredienti</legend>
+        {% for ingredient in ingredients %}
+            <div class="form-check form-check-inline">
+                <input id="{{ prefix }}-ingredient-{{ ingredient.id }}" type="checkbox" class="form-check-input"
+                       value="{{ ingredient.id }}" data-model="norender|{{ ingredients_model }}" {{ (ingredient.id ~ '') in selected ? 'checked' }}>
+                <label for="{{ prefix }}-ingredient-{{ ingredient.id }}" class="form-check-label">{{ ingredient.name }}</label>
+            </div>
+        {% else %}
+            <p class="text-body-secondary small mb-0">Nessun ingrediente: aggiungili nel riquadro «Ingredienti».</p>
+        {% endfor %}
+    </fieldset>
+{% endmacro %}
+
+<section {{ attributes }} class="mb-4">
+    <h2 class="h5">Menu</h2>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    {% set ingredients = pizzeria.ingredients %}
+    <form class="card card-body mb-3" data-action="live#action:prevent" data-live-action-param="add">
+        <h3 class="h6">Nuova pizza</h3>
+        {{ _self.fields('new-menu-pizza', 'name', name, 'price', price, 'ingredientIds', ingredientIds, ingredients) }}
+        <button type="submit" class="btn btn-primary">Aggiungi al menu</button>
+    </form>
+
+    {% if pizzeria.menuPizzas is empty %}
+        <p class="text-body-secondary">Il menu è vuoto.</p>
+    {% endif %}
+
+    <ul class="list-group" {{ stimulus_controller('confirm') }}>
+        {% for pizza in pizzeria.menuPizzas %}
+            <li class="list-group-item" data-menu-pizza id="menu-pizza-{{ pizza.id }}">
+                {% if editingId == pizza.id %}
+                    <form data-action="live#action:prevent" data-live-action-param="save">
+                        {{ _self.fields('edit-menu-pizza-' ~ pizza.id, 'editName', editName, 'editPrice', editPrice, 'editIngredientIds', editIngredientIds, ingredients) }}
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                        <button type="button" class="btn btn-link" data-action="live#action" data-live-action-param="cancelEdit">Annulla</button>
+                    </form>
+                {% else %}
+                    <div class="d-flex flex-wrap align-items-baseline gap-2">
+                        <strong class="flex-grow-1" data-menu-pizza-name>{{ pizza.name }}</strong>
+                        {% if pizza.priceCents is not null %}<span>{{ pizza.priceCents|money }}</span>{% endif %}
+                    </div>
+                    <p class="small text-body-secondary mb-2">{{ this.ingredientList(pizza) ?: 'Nessun ingrediente indicato' }}</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                data-live-action-param="startEdit" data-live-pizza-id-param="{{ pizza.id }}">Modifica</button>
+                        <button type="button" class="btn btn-outline-danger" data-action="confirm#ask live#action"
+                                data-live-action-param="delete" data-live-pizza-id-param="{{ pizza.id }}"
+                                data-confirm-message-param="Eliminare {{ pizza.name }} dal menu?">Elimina</button>
+                    </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>

@@ -3,3 +3,9 @@ live_component:
     prefix: '/_components'
     # adjust prefix to add localization to your components
     #prefix: '/{_locale}/_components'
+
+# Componenti dell'area di gestione: sotto /gestione, così firewall e access_control valgono anche per le loro azioni.
+gestione_live_component:
+    path: '/gestione/_components/{_live_component}/{_live_action}'
+    defaults:
+        _live_action: get

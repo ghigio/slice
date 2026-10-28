@@ -4,11 +4,6 @@
 
 {% block body %}
     {{ include('gestione/_header.html.twig', {title: 'Pizzerie'}) }}
-    {% if pizzerias is empty %}
-        <p class="text-body-secondary">Nessuna pizzeria.</p>
-    {% else %}
-        <ul class="list-group">
-            {% for pizzeria in pizzerias %}<li class="list-group-item">{{ pizzeria.name }}</li>{% endfor %}
-        </ul>
-    {% endif %}
+    <p class="text-body-secondary">Le pizzerie qui elencate si possono scegliere alla creazione di una serata: i gruppi vedono il loro menu.</p>
+    <twig:PizzeriaManager />
 {% endblock %}

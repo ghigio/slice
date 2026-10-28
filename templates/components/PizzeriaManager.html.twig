@@ -1,0 +1,53 @@
+<section {{ attributes }}>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    <form class="mb-4" data-action="live#action:prevent" data-live-action-param="add">
+        <label for="new-pizzeria-name" class="form-label">Nuova pizzeria</label>
+        <div class="input-group">
+            <input id="new-pizzeria-name" type="text" class="form-control form-control-lg" maxlength="100"
+                   placeholder="Da Gino" data-model="norender|newName" value="{{ newName }}">
+            <button type="submit" class="btn btn-primary">Aggiungi</button>
+        </div>
+    </form>
+
+    {% set pizzerias = this.pizzerias %}
+    {% if pizzerias is empty %}
+        <p class="text-body-secondary">Nessuna pizzeria: aggiungi la prima.</p>
+    {% endif %}
+
+    <ul class="list-unstyled mb-0" {{ stimulus_controller('confirm') }}>
+        {% for pizzeria in pizzerias %}
+            {% set evenings = this.countEvenings(pizzeria) %}
+            {% set ingredients = pizzeria.ingredients|length %}
+            {% set pizzas = pizzeria.menuPizzas|length %}
+            <li class="card mb-3" id="pizzeria-{{ pizzeria.id }}">
+                <div class="card-body">
+                    {% if editingId == pizzeria.id %}
+                        <form class="mb-2" data-action="live#action:prevent" data-live-action-param="rename">
+                            <label for="rename-pizzeria-{{ pizzeria.id }}" class="form-label">Nuovo nome</label>
+                            <input id="rename-pizzeria-{{ pizzeria.id }}" type="text" class="form-control mb-2" maxlength="100"
+                                   data-model="norender|editingName" value="{{ editingName }}">
+                            <button type="submit" class="btn btn-primary">Salva</button>
+                            <button type="button" class="btn btn-link" data-action="live#action" data-live-action-param="cancelEdit">Annulla</button>
+                        </form>
+                    {% endif %}
+                    <div class="d-flex flex-wrap align-items-baseline gap-2 mb-2">
+                        <strong data-pizzeria-name>{{ pizzeria.name }}</strong>
+                        <span class="text-body-secondary small">
+                            {{ pizzas }} {{ pizzas == 1 ? 'pizza' : 'pizze' }} · {{ ingredients }} {{ ingredients == 1 ? 'ingrediente' : 'ingredienti' }}
+                        </span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-primary" href="{{ path('gestione_pizzeria', {id: pizzeria.id}) }}">Menu e ingredienti</a>
+                        <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                data-live-action-param="startEdit" data-live-pizzeria-id-param="{{ pizzeria.id }}">Rinomina</button>
+                        <button type="button" class="btn btn-outline-danger" data-action="confirm#ask live#action"
+                                data-live-action-param="delete" data-live-pizzeria-id-param="{{ pizzeria.id }}"
+                                data-confirm-message-param="Eliminare {{ pizzeria.name }} con ingredienti e menu?{% if evenings > 0 %} {{ evenings }} {{ evenings == 1 ? 'serata perderà' : 'serate perderanno' }} il menu, ma non le pizze ordinate.{% endif %}">Elimina</button>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</section>

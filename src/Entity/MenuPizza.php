@@ -98,11 +98,14 @@ class MenuPizza
         return $this->ingredients;
     }
 
-    /** @param iterable<Ingredient> $ingredients sostituiscono quelli attuali */
+    /** @param iterable<Ingredient> $ingredients sostituiscono quelli attuali, in ordine alfabetico come quando si ricaricano */
     public function setIngredients(iterable $ingredients): void
     {
+        $sorted = [...$ingredients];
+        usort($sorted, fn (Ingredient $a, Ingredient $b) => strcmp($a->getNormalizedName(), $b->getNormalizedName()));
+
         $this->ingredients->clear();
-        foreach ($ingredients as $ingredient) {
+        foreach ($sorted as $ingredient) {
             if (!$this->ingredients->contains($ingredient)) {
                 $this->ingredients->add($ingredient);
             }

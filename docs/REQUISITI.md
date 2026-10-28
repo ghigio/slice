@@ -135,6 +135,14 @@ Da «Conto inserito» non si torna a «Ordini aperti» o «Ordini chiusi»: per 
 - Dettagli di implementazione del conto: il totale pagato va da 0,01 € a 50.000,00 € (virgola o punto, al massimo due decimali). L'anteprima si aggiorna mentre si digita e il pulsante «Conferma conto» (poi «Aggiorna conto») compare solo se il calcolo è possibile; con totale pagato maggiore del totale da listino serve la casella «Confermo l'importo». Lo sconto in percentuale ha due decimali (es. «10,45 %»); con maggiorazione si mostra «Maggiorazione applicata». Con conto inserito sono rifiutate le modifiche alle pizze che renderebbero impossibile il calcolo in modalità uguale (con la pizza coinvolta e il suggerimento della modalità proporzionale) e l'eliminazione dell'ultima pizza.
 - Rimborsi: l'interruttore registra data e ora (fuso Europe/Rome, impostato per tutta l'app); non compare per il gruppo dell'organizzatore né per i gruppi senza pizze, che mostrano «Nessun rimborso dovuto». Se il gruppo dell'organizzatore non è indicato, il riepilogo lo segnala e tutti i gruppi risultano da rimborsare. Riepilogo e pannello di stato si aggiornano subito dopo la conferma del conto e con polling ogni 15 secondi.
 
+### Gestione delle pizzerie (`/gestione`)
+
+- Area protetta da username e password, con un solo account definito da `ADMIN_USERNAME` e `ADMIN_PASSWORD_HASH`; con una delle due vuota nessuno può entrare. Login a form con CSRF, blocco dopo 5 tentativi falliti al minuto, pulsante «Esci». È l'unica parte dell'app con un login: serate, gruppi e inviti restano accessibili solo con i link segreti.
+- Elenco delle pizzerie con numero di pizze e ingredienti: aggiungere, rinominare ed eliminare (con conferma; se la pizzeria è usata da serate, il messaggio indica quante perderanno il menu, ma non le pizze ordinate).
+- Pagina di una pizzeria (`/gestione/pizzerie/{id}`): ingredienti (aggiungere, rinominare, eliminare con conferma che indica da quante pizze verrà tolto) e menu (pizze con nome, prezzo facoltativo e ingredienti scelti con caselle; modificare ed eliminare con conferma). Pizze e ingredienti in ordine alfabetico.
+- Limiti: nome della pizzeria al massimo 100 caratteri, dell'ingrediente 60, della pizza 80; prezzo come per le pizze ordinate (0,01 €–100 €). Nomi unici senza distinzione di maiuscole, accenti e spazi: le pizzerie nell'archivio, ingredienti e pizze nella propria pizzeria.
+- Le azioni dei Live Components di quest'area passano da `/gestione/_components/…` (coperte dal firewall) e ogni componente verifica comunque il ruolo, così le richieste costruite a mano sulla rotta pubblica `/_components/…` vengono rifiutate.
+
 ### Invito (`/i/{token_invito}`)
 
 - Intestazione con nome della serata, data, pizzeria e organizzatore; elenco dei **soli nomi** dei gruppi già aggiunti, senza link alle loro pagine né altri dati.

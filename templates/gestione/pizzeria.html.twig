@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pizzeria.name }} · Slice{% endblock %}
+
+{% block body %}
+    <p class="mb-2"><a href="{{ path('gestione') }}">← Pizzerie</a></p>
+    {{ include('gestione/_header.html.twig', {title: pizzeria.name}) }}
+    <twig:IngredientManager pizzeria="{{ pizzeria }}" />
+    <twig:MenuPizzaManager pizzeria="{{ pizzeria }}" />
+{% endblock %}

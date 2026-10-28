@@ -1,0 +1,47 @@
+<section {{ attributes }} class="mb-4">
+    <h2 class="h5">Ingredienti</h2>
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+
+    <form class="mb-3" data-action="live#action:prevent" data-live-action-param="add">
+        <label for="new-ingredient-name" class="form-label">Nuovo ingrediente</label>
+        <div class="input-group">
+            <input id="new-ingredient-name" type="text" class="form-control" maxlength="60"
+                   placeholder="Mozzarella" data-model="norender|newName" value="{{ newName }}">
+            <button type="submit" class="btn btn-primary">Aggiungi</button>
+        </div>
+    </form>
+
+    {% if pizzeria.ingredients is empty %}
+        <p class="text-body-secondary">Nessun ingrediente: aggiungili prima delle pizze.</p>
+    {% endif %}
+
+    <ul class="list-group" {{ stimulus_controller('confirm') }}>
+        {% for ingredient in pizzeria.ingredients %}
+            {% set pizzas = this.countPizzasWith(ingredient) %}
+            <li class="list-group-item" id="ingredient-{{ ingredient.id }}">
+                {% if editingId == ingredient.id %}
+                    <form data-action="live#action:prevent" data-live-action-param="rename">
+                        <label for="rename-ingredient-{{ ingredient.id }}" class="visually-hidden">Nuovo nome di {{ ingredient.name }}</label>
+                        <div class="input-group">
+                            <input id="rename-ingredient-{{ ingredient.id }}" type="text" class="form-control" maxlength="60"
+                                   data-model="norender|editingName" value="{{ editingName }}">
+                            <button type="submit" class="btn btn-primary">Salva</button>
+                            <button type="button" class="btn btn-link" data-action="live#action" data-live-action-param="cancelEdit">Annulla</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="flex-grow-1" data-ingredient-name>{{ ingredient.name }}</span>
+                        <span class="text-body-secondary small">{{ pizzas }} {{ pizzas == 1 ? 'pizza' : 'pizze' }}</span>
+                        <button type="button" class="btn btn-outline-secondary" data-action="live#action"
+                                data-live-action-param="startEdit" data-live-ingredient-id-param="{{ ingredient.id }}">Rinomina</button>
+                        <button type="button" class="btn btn-outline-danger" data-action="confirm#ask live#action"
+                                data-live-action-param="delete" data-live-ingredient-id-param="{{ ingredient.id }}"
+                                data-confirm-message-param="Eliminare {{ ingredient.name }}?{% if pizzas > 0 %} Verrà tolto da {{ pizzas }} {{ pizzas == 1 ? 'pizza' : 'pizze' }} del menu.{% endif %}">Elimina</button>
+                    </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>
