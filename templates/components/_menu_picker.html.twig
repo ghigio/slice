@@ -1,0 +1,41 @@
+{# Menu della pizzeria nota nella pagina del gruppo: nome e ingredienti, filtro per ingrediente, nessun prezzo. #}
+<button type="button" class="btn btn-outline-primary w-100 mt-2" data-action="live#action" data-live-action-param="toggleMenu"
+        aria-expanded="{{ showMenu ? 'true' : 'false' }}" aria-controls="{{ list_id }}-menu">
+    {{ showMenu ? 'Chiudi il menu' : 'Scegli dal menu di ' ~ pizzeria.name }}
+</button>
+{% if showMenu %}
+    <div id="{{ list_id }}-menu" class="border rounded p-2 mt-2" data-menu>
+        {% if pizzeria.ingredients is not empty %}
+            <fieldset class="mb-2">
+                <legend class="form-label fs-6 mb-1">Filtra per ingrediente</legend>
+                {% for ingredient in pizzeria.ingredients %}
+                    <div class="form-check form-check-inline">
+                        <input id="{{ list_id }}-filter-{{ ingredient.id }}" type="checkbox" class="form-check-input"
+                               value="{{ ingredient.id }}" data-model="ingredientFilter" {{ (ingredient.id ~ '') in ingredientFilter ? 'checked' }}>
+                        <label for="{{ list_id }}-filter-{{ ingredient.id }}" class="form-check-label">{{ ingredient.name }}</label>
+                    </div>
+                {% endfor %}
+                {% if ingredientFilter is not empty %}
+                    <button type="button" class="btn btn-link btn-sm" data-action="live#action" data-live-action-param="clearFilter">Azzera filtro</button>
+                {% endif %}
+            </fieldset>
+        {% endif %}
+
+        {% set menu = this.menu %}
+        {% if menu is empty %}
+            <p class="text-body-secondary mb-0">{{ pizzeria.menuPizzas is empty ? 'Il menu è vuoto: scrivi il nome della pizza.' : 'Nessuna pizza con questi ingredienti.' }}</p>
+        {% endif %}
+        <ul class="list-unstyled mb-0">
+            {% for menu_pizza in menu %}
+                <li class="d-flex align-items-center gap-2 border-top py-2" data-menu-pizza>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold" data-menu-pizza-name>{{ menu_pizza.name }}</div>
+                        <div class="small text-body-secondary">{{ this.ingredientList(menu_pizza) }}</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" data-action="live#action"
+                            data-live-action-param="chooseMenuPizza" data-live-menu-pizza-id-param="{{ menu_pizza.id }}">Scegli</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

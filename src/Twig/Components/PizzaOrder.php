@@ -3,7 +3,10 @@
 namespace App\Twig\Components;
 
 use App\Entity\Eater;
+use App\Entity\Ingredient;
+use App\Entity\MenuPizza;
 use App\Entity\Pizza;
+use App\Entity\Pizzeria;
 use App\Evening\BillSummary;
 use App\Evening\Exception\EveningRuleException;
 use App\Evening\PizzaOrdering;
@@ -54,8 +57,19 @@ final class PizzaOrder
     #[LiveProp(writable: true)]
     public string $editPrice = '';
 
+    /** Riquadro «Scegli dal menu» aperto (solo con una pizzeria nota). */
+    #[LiveProp(writable: true)]
+    public bool $showMenu = false;
+
+    /** @var list<string> id degli ingredienti del filtro del menu */
+    #[LiveProp(writable: true)]
+    public array $ingredientFilter = [];
+
     public ?string $error = null;
     public ?string $notice = null;
+
+    /** @var ?list<array{name: string, priceCents: ?int}> */
+    private ?array $suggestions = null;
 
     public function __construct(
         private readonly PizzaOrdering $ordering,
@@ -179,10 +193,88 @@ final class PizzaOrder
         return \count(array_filter($this->eater->getPizzas()->toArray(), fn (Pizza $p) => !$p->hasPrice()));
     }
 
-    /** @return list<array{name: string, priceCents: ?int}> */
+    /**
+     * Pizze della serata e, con una pizzeria nota, del suo menu: una per nome normalizzato, ordinate per nome.
+     * Il prezzo è l'ultimo della serata o, se manca, quello del menu.
+     *
+     * @return list<array{name: string, priceCents: ?int}>
+     */
     public function pizzaSuggestions(): array
     {
-        return $this->pizzas->suggestionsForEvening($this->eater->getEvening());
+        if (null !== $this->suggestions) {
+            return $this->suggestions;
+        }
+
+        $suggestions = [];
+        foreach ($this->pizzas->suggestionsForEvening($this->eater->getEvening()) as $suggestion) {
+            $suggestions[NameNormalizer::normalize($suggestion['name'])] = $suggestion;
+        }
+        foreach ($this->eater->getEvening()->getKnownPizzeria()?->getMenuPizzas() ?? [] as $menuPizza) {
+            $suggestion = &$suggestions[$menuPizza->getNormalizedName()];
+            $suggestion ??= ['name' => $menuPizza->getName(), 'priceCents' => null];
+            $suggestion['priceCents'] ??= $menuPizza->getPriceCents();
+            unset($suggestion);
+        }
+        $suggestions = array_values($suggestions);
+        usort($suggestions, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+
+        return $this->suggestions = $suggestions;
+    }
+
+    /** Apre e chiude il riquadro «Scegli dal menu». */
+    #[LiveAction]
+    public function toggleMenu(): void
+    {
+        $this->showMenu = !$this->showMenu;
+    }
+
+    #[LiveAction]
+    public function clearFilter(): void
+    {
+        $this->ingredientFilter = [];
+    }
+
+    /** Copia nel campo pizza il nome di una pizza del menu della pizzeria della serata. */
+    #[LiveAction]
+    public function chooseMenuPizza(#[LiveArg] int $menuPizzaId): void
+    {
+        foreach ($this->getMenuPizzeria()?->getMenuPizzas() ?? [] as $menuPizza) {
+            if ($menuPizza->getId() === $menuPizzaId) {
+                $this->pizzaName = $menuPizza->getName();
+                $this->showMenu = false;
+
+                return;
+            }
+        }
+
+        $this->error = 'Pizza non trovata nel menu.';
+    }
+
+    /** Pizzeria nota della serata, il cui menu si mostra al gruppo; null con «Altra pizzeria». */
+    public function getMenuPizzeria(): ?Pizzeria
+    {
+        return $this->eater->getEvening()->getKnownPizzeria();
+    }
+
+    /**
+     * Pizze del menu che contengono tutti gli ingredienti del filtro.
+     *
+     * @return list<MenuPizza>
+     */
+    public function getMenu(): array
+    {
+        $selected = array_map('intval', $this->ingredientFilter);
+
+        return array_values(array_filter(
+            $this->getMenuPizzeria()?->getMenuPizzas()->toArray() ?? [],
+            fn (MenuPizza $pizza) => [] === array_diff($selected, $pizza->getIngredients()->map(fn (Ingredient $i) => $i->getId())->toArray()),
+        ));
+    }
+
+    /** Ingredienti della pizza, separati da virgola. */
+    public function ingredientList(MenuPizza $pizza): string
+    {
+        return implode(', ', $pizza->getIngredients()->map(fn (Ingredient $i) => $i->getName())->toArray());
     }
 
     /** @return list<string> */
@@ -209,6 +301,7 @@ final class PizzaOrder
     {
         try {
             $this->notice = $operation();
+            $this->suggestions = null;
         } catch (EveningRuleException $e) {
             $this->error = $e->getMessage();
         }

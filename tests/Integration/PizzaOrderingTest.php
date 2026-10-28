@@ -4,7 +4,9 @@ namespace App\Tests\Integration;
 
 use App\Entity\Eater;
 use App\Entity\Evening;
+use App\Entity\MenuPizza;
 use App\Entity\Pizza;
+use App\Entity\Pizzeria;
 use App\Enum\EveningStatus;
 use App\Evening\Exception\EveningRuleException;
 use App\Evening\PizzaOrdering;
@@ -174,6 +176,24 @@ final class PizzaOrderingTest extends KernelTestCase
 
         // Un prezzo non valido inviato dal gruppo non conta: il campo non esiste per il gruppo.
         self::assertNull($this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', 'tanto', false)->getPriceCents());
+    }
+
+    public function testSenzaPrezzoNellaSerataSiUsaQuelloDelMenu(): void
+    {
+        $pizzeria = new Pizzeria('Da Gino');
+        new MenuPizza($pizzeria, 'Diavola', 800);
+        new MenuPizza($pizzeria, 'Marinara', null);
+        $this->em->persist($pizzeria);
+        $this->evening->setKnownPizzeria($pizzeria);
+        $this->em->flush();
+
+        self::assertSame(800, $this->ordering->addPizza($this->rossi, 'Anna', ' diavola ', '', false)->getPriceCents());
+        self::assertNull($this->ordering->addPizza($this->rossi, 'Anna', 'Marinara', '', false)->getPriceCents(), 'Menu senza prezzo');
+        self::assertNull($this->ordering->addPizza($this->rossi, 'Anna', 'Margherita baby', '', false)->getPriceCents(), 'Pizza fuori menu');
+
+        // L'organizzatore corregge il prezzo nella serata: vale più del menu.
+        $this->ordering->addPizza($this->rossi, 'Luca', 'Diavola', '7,50', true);
+        self::assertSame(750, $this->ordering->addPizza($this->rossi, 'Gino', 'Diavola', '', false)->getPriceCents());
     }
 
     public function testLaPizzaDelGruppoPrendeLUltimoPrezzoNotoPerQuelNome(): void

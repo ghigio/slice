@@ -220,7 +220,10 @@ final class PizzaOrdering
         throw new EveningRuleException('Pizza non trovata.');
     }
 
-    /** Ultimo prezzo inserito per quel nome nella serata, null se nessuna pizza con quel nome ha un prezzo. */
+    /**
+     * Ultimo prezzo inserito per quel nome nella serata (l'organizzatore può averlo corretto); altrimenti il prezzo
+     * del menu della pizzeria nota; null se non c'è nessuno dei due.
+     */
     private function knownPriceFor(Evening $evening, string $normalizedName): ?int
     {
         $known = null;
@@ -229,8 +232,17 @@ final class PizzaOrdering
                 $known = $pizza->getPriceCents();
             }
         }
+        if (null !== $known) {
+            return $known;
+        }
 
-        return $known;
+        foreach ($evening->getKnownPizzeria()?->getMenuPizzas() ?? [] as $menuPizza) {
+            if ($menuPizza->getNormalizedName() === $normalizedName) {
+                return $menuPizza->getPriceCents();
+            }
+        }
+
+        return null;
     }
 
     /**

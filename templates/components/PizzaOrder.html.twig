@@ -28,6 +28,9 @@
                        list="{{ list_id }}-pizzas" data-model="debounce(400)|pizzaName" value="{{ pizzaName }}" required
                        {% if asOrganizer %}{{ stimulus_target('pizza-price', 'name') }} data-action="input->pizza-price#suggest"{% endif %}>
                 {{ include('components/_similar_pizza.html.twig', {similar: this.similarTo(pizzaName), field: 'pizzaName'}) }}
+                {% if this.menuPizzeria %}
+                    {{ include('components/_menu_picker.html.twig', {pizzeria: this.menuPizzeria, list_id: list_id}) }}
+                {% endif %}
             </div>
             {% if asOrganizer %}
             <div class="mb-3">
